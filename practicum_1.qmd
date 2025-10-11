@@ -1,0 +1,152 @@
+---
+title: "practicum_1"
+format: html
+editor: visual
+author: "Kieran Douglas"
+---
+
+## 3) Least Squares Estimates of β
+
+#### A)
+
+```{r}
+# Load data and packages
+library(tidyquant)
+library(tidyverse)
+library(data.table)
+library(car)
+
+stock <- tq_get(
+  c("XOM", "BAC", "^GSPC", "^IRX"),
+  get = "stock.prices",
+  from = "2010-01-01",
+  to = "2019-12-31",
+  naa.rm = TRUE
+)
+
+# group data by date
+stock_clean <- stock %>%
+  select(date, symbol, adjusted, volume, open, high, low, close) %>%
+  pivot_wider(
+    names_from = symbol,
+    values_from = c(adjusted, volume, open, high, low, close)
+  ) %>% 
+  na.omit()
+
+# My expectation is that Bank of America will be a riskier asset than Exxon since banks would probably be more prone to exposure to broader shifts in  the economy
+# We are using US treasury yield as the risk free rate, s&p500 index as the market rate, EXXON as the risky rate and BAC as the safe rate
+# calculate returns
+stock_clean$irx_return <- (stock_clean$`close_^IRX` - lag(stock_clean$`close_^IRX`)) /lag(stock_clean$`close_^IRX`) 
+stock_clean$xom_return <- (stock_clean$close_XOM - lag(stock_clean$close_XOM)) /lag(stock_clean$close_XOM) 
+stock_clean$bac_return <- (stock_clean$close_BAC - lag(stock_clean$close_BAC)) /lag(stock_clean$close_BAC) 
+stock_clean$gspc_return <- (stock_clean$`close_^GSPC` - lag(stock_clean$`close_^GSPC`)) /lag(stock_clean$`close_^GSPC`) 
+
+#Divide your sample in two, the first half spanning January 2010-December 2014, and the second half covering January 2015–December 2019. I want to work with the data from 2010-2014
+from2010to2014 <- stock_clean %>%
+  filter(date >= as.Date("2010-01-01") & date <= as.Date("2014-12-31"))
+
+from2015to2019 <- stock_clean %>% 
+  filter(date>= as.Date("2015-01-01") & date<= as.Date("2019-12-31"))
+
+```
+
+#### B)
+
+```{r}
+# Estimating the CAPM model
+# start by calculating market-riskfree dif and firm-riskfree dif for xom
+from2010to2014$excessreturn_xom <- from2010to2014$xom_return-from2010to2014$irx_return
+from2010to2014$mrpremium <- from2010to2014$gspc_return-from2010to2014$irx_return
+
+from2015to2019$excessreturn_xom <- from2015to2019$xom_return-from2015to2019$irx_return
+from2015to2019$mrpremium <- from2015to2019$gspc_return-from2015to2019$irx_return
+
+# run xom model for each year bundle
+xom_model1 <- lm(data = from2010to2014, excessreturn_xom~mrpremium)
+summary(xom_model1)
+
+xom_model2 <- lm(data = from2015to2019, excessreturn_xom~mrpremium)
+summary(xom_model2)
+
+# now by calculating market-riskfree dif and firm-riskfree dif for bac 
+from2010to2014$excessreturn_bac <- from2010to2014$bac_return-from2010to2014$irx_return
+from2010to2014$mrpremium <- from2010to2014$gspc_return-from2010to2014$irx_return
+
+from2015to2019$excessreturn_bac <- from2015to2019$bac_return-from2015to2019$irx_return
+from2015to2019$mrpremium <- from2015to2019$gspc_return-from2015to2019$irx_return
+
+bac_model1 <- lm(data = from2010to2014, excessreturn_bac~mrpremium)
+summary(bac_model1)
+
+bac_model2 <- lm(data = from2015to2019, excessreturn_bac~mrpremium)
+summary(bac_model2)
+
+# It seems like all of my regressions came back with beta coefficients close to what would be expected if the individual stock just followed market trends. I dont see any meaningful deviation from this in the data. The only weirdness is in the alphas, where we rarely have statistical significance. This is not super surprising though, an. all alpha values are close to zero suggesting a very low excess of the stocks return being explained by more than just the beta coeficient. These are not ststistically significant though (might have to do with outliers?)
+```
+
+#### C)
+
+It kind of seems like some of the major dips in premium for the Bank of America happen right around election cycles. I see that pre 2012 and pre 2016 there are some of the larger dips, but they are few and far between.
+
+```{r}
+ggplot(data = from2010to2014, mapping = aes(x = date, y = excessreturn_bac, color = mrpremium)) +
+  geom_point() +
+  geom_smooth(method = lm) +
+  theme_light() +
+  labs(title = "Risk Premium Over Time For The Bank of America", x = "Date", y = "Risk Premium", color = "Market-Treasury Return Difference")
+```
+
+#### D)E)
+
+Hypothesis testing! In each of these hypothesis tests there is insufficient evidence to conclude that for D) the intercept differs from 0 and for E) the premium coefficient differs from 1. This is to be expected when firms have returns that are in line with market trends.
+
+```{r}
+# hpoothesis test that a=0
+linearHypothesis(bac_model1, "(Intercept) = 0")
+linearHypothesis(xom_model1, "(Intercept) = 0")
+# the f stat being effectively 0 with a relatively high p value indicates that we cannot reject the null hypothesis.
+# I think that a rejection out the null in this case would probably invalidate the results, as a nonzero alpha indicates that the market risk does not fully explain the abnormal returns. 
+
+# Using the li
+linearHypothesis(bac_model1, "mrpremium = 1")
+linearHypothesis(xom_model1, "mrpremium = 1")
+# from this I find that the null hypothesis can only be rejected for the more volatile industry, the Bank of America.
+# For the bank I dont find this surprising since it was shown to not follow market trends. For Exxon I also dont find the nonrejection surprising since it was fairly normal in paramaters. 
+
+```
+
+#### F)
+
+The output I received showing proportional market risk makes lots of sense and confirms that the stocks I chose are normal market movers. The market risk proportion is close to 1 for both indicating that almost all of the risk and excess returns from each company can be explained by the more systematic market risk. The market movements explain the volatility.
+
+```{r}
+# bank of america prop risk
+beta <- coef(bac_model1)
+market_var <- var(from2010to2014$mrpremium, na.rm = TRUE)
+
+asset_var_bac <- var(from2010to2014$excessreturn_bac, na.rm = TRUE)
+
+# Proportion of risk attributable to market
+proportion_market_risk_bac <- (beta^2 * market_var) / asset_var_bac
+print(proportion_market_risk_bac)
+
+
+# exxon prop risk
+beta <- coef(xom_model1)
+market_var <- var(from2010to2014$mrpremium, na.rm = TRUE)
+
+asset_var_xom <- var(from2010to2014$excessreturn_xom, na.rm = TRUE)
+
+# Proportion of risk attributable to market
+proportion_market_risk_xom <- (beta^2 * market_var) / asset_var_xom
+print(proportion_market_risk_xom)
+
+```
+
+#### G)
+
+In my sample, large estimates of \$\\beta\$ definitely correspond with higher R^2\ values.\ This\ makes\ sense\ given\ what\ we\ have\ learned\ about\ the\ two\ stocks\ in\ question\ being\ pretty\ highly\ linked\ in\ behavior\ to\ broader\ market\ moves.\ I\ would\ not\ expect\ this\ to\ always\ be\ the\ case\ though.\ We\ could\ imagine\ a\ case\ where\ a\ stock\ has\ a\ very\ small\ (negative)\ beta\ value\ but\ a\ high\ R\^2.\ In\ this\ scenario,\ maybe\ the\ beta\ value\ implies\ effectively\ opposite\ movements\ to\ the\ broader\ market.\ This\ can\ still\ be\ well\ explained\ by\ the\ model,\ it\ just\ operates\ in\ the\ opposite\ way\ that\ we\ would\ a\ typical\ "market-tracking"\ stock\ to.^
+
+## 4) Is January Different?
+
+#### A)
