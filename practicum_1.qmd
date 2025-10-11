@@ -145,8 +145,12 @@ print(proportion_market_risk_xom)
 
 #### G)
 
-In my sample, large estimates of \$\\beta\$ definitely correspond with higher R^2\ values.\ This\ makes\ sense\ given\ what\ we\ have\ learned\ about\ the\ two\ stocks\ in\ question\ being\ pretty\ highly\ linked\ in\ behavior\ to\ broader\ market\ moves.\ I\ would\ not\ expect\ this\ to\ always\ be\ the\ case\ though.\ We\ could\ imagine\ a\ case\ where\ a\ stock\ has\ a\ very\ small\ (negative)\ beta\ value\ but\ a\ high\ R\^2.\ In\ this\ scenario,\ maybe\ the\ beta\ value\ implies\ effectively\ opposite\ movements\ to\ the\ broader\ market.\ This\ can\ still\ be\ well\ explained\ by\ the\ model,\ it\ just\ operates\ in\ the\ opposite\ way\ that\ we\ would\ a\ typical\ "market-tracking"\ stock\ to.^
+In my sample, large estimates of \$\\beta\$ definitely correspond with higher R^2 values. This makes sense given what we have learned about the two stocks in question being pretty highly linked in behavior to broader market moves. I would not expect this to always be the case though. We could imagine a case where a stock has a very small (negative) beta value but a high R\^2. In this scenario, maybe the beta value implies effectively opposite movements to the broader market. This can still be well explained by the model, it just operates in the opposite way that we would a typical "market-tracking" stock to.^
 
 ## 4) Is January Different?
 
 #### A)
+
+```{r}
+Starting off 
+```
