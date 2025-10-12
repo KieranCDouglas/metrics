@@ -94,7 +94,7 @@ filtered_data <- merged_clean %>%
   filter(first_adopt_year == 2013 | is.na(first_adopt_year))
 
 # At this point I have wrangled the data to exclude cases of staggered adoption, included leads for the parallel trends assumption, and merged the seperate df by simplified date and firm_id.
-# The next step will be to refine the data, generate additional variables, and ensure readiness for analysis.
+# The next step will be to refine the data, generate additional variables, and ensure readiness for analysis. I will convert year_month a proper date in standard format by changing the day to 01 for every cell (because again, we really care about month and year) 
 merged_clean <- filtered_data %>% 
   select(firm_id, sales_t, year_month, employment_t, wage_bill_t, revenue_t, adopt_t, firm_name, firm_sector) %>% 
   group_by(firm_id) %>%
@@ -104,8 +104,8 @@ merged_clean <- filtered_data %>%
     wagerev_ratio = wage_bill_t / revenue_t,
     salesgrowth = (sales_t - lag(sales_t)) / lag(sales_t),
     revgrowth = (revenue_t - lag(revenue_t)) / lag(revenue_t),
-    rev_per_employee_change = (rev_per_employee-lag(rev_per_employee))/lag(rev_per_employee)
-  ) %>%
+    rev_per_employee_change = (rev_per_employee-lag(rev_per_employee))/lag(rev_per_employee),
+    year_month = as.Date(paste0(year_month, "-01"), format = "%Y-%m-%d")  ) %>%
   ungroup() 
   
 # I will also create a firm performance index (despite having my qualms with their interpretability) for the sake of exploration and potential added rhobustness to my analysis. In this index, I only include change variables since firm size can paint a weird picture.
@@ -125,3 +125,44 @@ merged_clean <- merged_clean %>%
   ) %>%
   ungroup()
 
+# I will also create an "ever adopted" variable for assumption checks
+# Create a firm-level variable
+firm_adoption_status <- merged_clean %>%
+  group_by(firm_id) %>%
+  summarize(ever_adopted = as.integer(any(adopt_t == 1)))
+
+# Now I will merge it back to main df
+merged_clean <- merged_clean %>%
+  left_join(firm_adoption_status, by = "firm_id")
+
+### --- Analysis --- ###
+# Before running my regressions, I will check the some assumptions of TWFE DiD
+# The first graphic demonstrates similar trends in average revenue growth across adopters and nonadopters, with significant confidence interval overlap.
+parallel_check <- merged_clean %>%
+  group_by(year_month, ever_adopted) %>%
+  summarize(mean_revgrowth = mean(revgrowth, na.rm = TRUE)) %>%
+  ungroup() %>%
+  complete(year_month, ever_adopted, fill = list(mean_revgrowth = NA)) %>% 
+  mutate(mean_revgrowth = mean_revgrowth*100)
+
+ggplot(parallel_check, aes(x = year_month, y = mean_revgrowth, color = ever_adopted, group = ever_adopted)) +
+  geom_smooth(size = 1.6) +
+  labs(title = "Parallel Trends Assumption Check 1",x = "Year", y = "Mean Revenue Growth (%)", color = "Adoption Status") +
+  theme_linedraw() +
+  xlim(as.Date("2010-01-01"), as.Date("2012-12-31")) +
+  ylim(0,10)
+
+# The second graphic demonstrates an earnings gap between adopters and nonadopters prior to the start of the adoption period, but similar trajectory noetheless.
+parallel_check <- merged_clean %>%
+  group_by(year_month, ever_adopted) %>%
+  summarize(salesmed = median(sales_t, na.rm = TRUE)) %>%
+  ungroup() %>%
+  complete(year_month, ever_adopted, fill = list(salesmed = NA)) 
+
+ggplot(parallel_check, aes(x = year_month, y = salesmed, color = ever_adopted, group = ever_adopted)) +
+  geom_smooth(size = 1.6) +
+  labs(title = "Parallel Trends Assumption Check 2", x = "Year", y = "Median Number of Sales Per Month", color = "Adoption Status") +
+  theme_linedraw() +
+  xlim(as.Date("2010-01-01"), as.Date("2012-12-31"))
+
+# To supplement the imagery, I will run a pre-trend regression
