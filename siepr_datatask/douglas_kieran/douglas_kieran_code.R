@@ -6,9 +6,8 @@
 ### Description: This is an empirical evaluation of the Small Business Training Program and its effect on firm productivity
 
 ### --- Package installation and loading data --- ###
-install.packages(c("tidyverse", "car", "randomForest", "ivreg", "fixest", "sandwich", "lubridate"))
-lapply(c("tidyverse", "car", "randomForest", "ivreg", "fixest", "sandwich", "lubridate"), library, character.only = TRUE)
-
+install.packages(c("tidyverse", "car", "randomForest", "ivreg", "fixest", "sandwich", "lubridate", "ggthemes", "gtsummary","gt"))
+lapply(c("tidyverse", "car", "randomForest", "ivreg", "fixest", "sandwich", "lubridate", "ggthemes", "gtsummary", "gt"), library, character.only = TRUE)
 # Change path names for replication
 firm_data <- read_csv("Documents/MASTERS/METRICS/code/metrics/siepr_datatask/inputs/firm_information.csv")
 ag_sales <- read_csv("Documents/MASTERS/METRICS/code/metrics/siepr_datatask/inputs/aggregate_firm_sales.csv")
@@ -142,13 +141,13 @@ parallel_check <- merged_clean %>%
   complete(date, ever_adopted, fill = list(mean_revgrowth = NA)) %>% 
   mutate(mean_revgrowth = mean_revgrowth*100)
 
-ggplot(parallel_check, aes(x = date, y = mean_revgrowth, color = ever_adopted, group = ever_adopted)) +
+ggplot(parallel_check, aes(x = date, y = mean_revgrowth, color = factor(ever_adopted, labels = c("Not Adopted", "Adopted")), group = ever_adopted)) +
   geom_smooth(size = 1.6) +
   labs(title = "Parallel Trends Assumption Check 1",x = "Year", y = "Mean Revenue Growth (%)", color = "Adoption Status") +
-  theme_linedraw() +
+  theme_fivethirtyeight() +
   xlim(as.Date("2010-01-01"), as.Date("2012-12-31")) +
-  ylim(0,10)
-
+  ylim(0,10) +
+  scale_color_manual(values = c("Not Adopted" = "#D4AFB9", "Adopted" = "#7EC4CF"))
 # The second graphic demonstrates an earnings gap between adopters and non-adopters prior to the start of the adoption period, but similar trajectory nonetheless.
 parallel_check <- merged_clean %>%
   group_by(date, ever_adopted) %>%
@@ -156,11 +155,13 @@ parallel_check <- merged_clean %>%
   ungroup() %>%
   complete(date, ever_adopted, fill = list(salesmed = NA)) 
 
-ggplot(parallel_check, aes(x = date, y = salesmed, color = ever_adopted, group = ever_adopted)) +
+ggplot(parallel_check, aes(x = date, y = salesmed, color = factor(ever_adopted, labels = c("Not Adopted", "Adopted")), group = ever_adopted)) +
   geom_smooth(size = 1.6) +
   labs(title = "Parallel Trends Assumption Check 2", x = "Year", y = "Median Number of Sales Per Month", color = "Adoption Status") +
-  theme_linedraw() +
-  xlim(as.Date("2010-01-01"), as.Date("2012-12-31"))
+  theme_fivethirtyeight() +
+  xlim(as.Date("2010-01-01"), as.Date("2012-12-31")) +
+  scale_color_manual(values = c("Not Adopted" = "#D4AFB9", "Adopted" = "#7EC4CF"))
+
 
 # To supplement the imagery, I will run a pre-trend linear regression. Here, I am interested in trends over time with the interaction term between time and whether or not the firm was at some point treated.
 # To do this, I created a pre-2013 df and regressed an interaction term between date and adoption on each potential outcome variable of interest.
@@ -211,14 +212,119 @@ summary(model_employ)
 model_wage <- feols(data = merged_clean, wage_bill_t ~ adopt_t | firm_id + date, cluster =  ~firm_id)
 summary(model_wage)
 
+# I will now make a few graphics to demonstrate general characteristics of the data in addition to visualizations of the effect that the jobs training program had on business outcomes.
+# Start by factoring adoption status for interpretability
+merged_clean$ever_adopted_factor <- factor(
+  merged_clean$ever_adopted,
+  levels = c(0, 1),
+  labels = c("Not Adopted", "Adopted"))
+# Create a df for graphics with modified variables to help with interpretation.
+graphics <- merged_clean %>%
+  group_by(date, ever_adopted) %>%
+  summarize(
+    mean_perempgrow = mean(rev_per_employee, na.rm = TRUE),
+    mean_employment = mean(employment_t, na.rm = TRUE),
+    mean_perfindex = mean(performance_index, na.rm = TRUE),
+    mean_salesgrowth = mean(salesgrowth, na.rm = TRUE),
+    .groups = "drop") %>%
+  complete(date, ever_adopted, fill = list(
+    mean_perempgrow = NA,
+    mean_employment = NA,
+    mean_perfindex = NA,
+    mean_salesgrowth = NA)) %>%
+  mutate(
+    mean_perempgrow = mean_perempgrow * 100,
+    ever_adopted_factor = factor(
+      ever_adopted,
+      levels = c(0, 1),
+      labels = c("Not Adopted", "Adopted")))
+# Now make some graphs!
+# Create a graphic showing time trends of revenue per employee by adoption status
+ggplot(data = merged_clean, mapping = aes(x = date, y = rev_per_employee, color = ever_adopted_factor, group = ever_adopted_factor)) +
+  geom_smooth() +
+  facet_wrap(~ ever_adopted_factor) +
+  scale_color_manual(values = c("Not Adopted" = "#D4AFB9", "Adopted" = "#7EC4CF")) +
+  theme_fivethirtyeight() +
+  labs(title = "Revenue Per Employee By Adoption Status", x = "Date", y = "revenue Per Employee", color = "Ever Adopted") +
+  geom_vline(xintercept = as.Date("2013-01-01"), linetype = "dashed", color = "#9CADCE", size = .5) 
+  
+ggplot(
+  data = graphics, 
+  mapping = aes(x = date, y = mean_perfindex, color = ever_adopted_factor, group = ever_adopted_factor)) +
+  geom_smooth() +
+  facet_wrap(~ ever_adopted_factor) +
+  scale_color_manual(values = c("Not Adopted" = "#D4AFB9", "Adopted" = "#7EC4CF")) +
+  theme_fivethirtyeight() +
+  labs(title = "Average Performance Index By Adoption Status",x = "Date", y = "Performance Index (Z-Score)", color = "Ever Adopted") +
+  geom_vline(xintercept = as.Date("2013-01-01"), linetype = "dashed", color = "#9CADCE", size = .5) 
 
+# Now I will generate a table of summary statistics for my paper.
+# First create df for pre and post 2013 to compare.
+df_pre2013 <- merged_clean %>%
+  filter(date < "2013-01-01") %>%
+  select(date, ever_adopted_factor, employment_t, wage_bill_t, rev_per_employee, revgrowth, firm_id)
+df_post2013 <- merged_clean %>%
+  filter(date > "2013-01-01") %>%
+  select(date, ever_adopted_factor, employment_t, wage_bill_t, rev_per_employee, revgrowth, firm_id)
 
+# Create pre 2013 table.
+tbl_pre2013 <- df_pre2013 %>%
+  select(ever_adopted_factor, employment_t, wage_bill_t, rev_per_employee) %>%
+  tbl_summary(
+    by = ever_adopted_factor,
+    statistic = list(all_continuous() ~ "{mean} ({sd})"),
+    label = list(
+      employment_t = "Number Employed",
+      wage_bill_t = "Labor Cost",
+      rev_per_employee = "Revenue per Employee"
+    )
+  ) 
+tbl_pre2013
 
+# Formatted with GT:
+tbl_pre2013_gt <- tbl_pre2013 %>%
+  as_gt() %>%
+  tab_header(
+    title = "Pre-2013 Firm-Level Summary Statistics"
+  ) %>%
+  tab_style(
+    style = cell_text(align = "left"),
+    locations = cells_body()
+  ) %>%
+  tab_options(
+    table.border.top.color = "#7EC4CF",
+    table.border.bottom.color = "#7EC4CF",
+    heading.background.color = "#D1CFE2"
+  )
+tbl_pre2013_gt
 
-
-
-
-
+# Create post 2013 table.
+tbl_post2013 <- df_post2013 %>%
+  select(ever_adopted_factor, employment_t, wage_bill_t, rev_per_employee) %>%
+  tbl_summary(
+    by = ever_adopted_factor,
+    statistic = list(all_continuous() ~ "{mean} ({sd})"),
+    label = list(
+      employment_t = "Number Employed",
+      wage_bill_t = "Labor Cost",
+      rev_per_employee = "Revenue per Employee"
+    ))
+# Formatted with GT:
+tbl_post2013_gt <- tbl_post2013 %>%
+  as_gt() %>%
+  tab_header(
+    title = "Post-2013 Firm-Level Summary Statistics"
+  ) %>%
+  tab_style(
+    style = cell_text(align = "left"),
+    locations = cells_body()
+  ) %>%
+  tab_options(
+    table.border.top.color = "#7EC4CF",
+    table.border.bottom.color = "#7EC4CF",
+    heading.background.color = "#D1CFE2"
+  )
+tbl_post2013_gt
 
 
 
