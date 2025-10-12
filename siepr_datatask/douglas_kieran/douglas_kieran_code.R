@@ -187,15 +187,29 @@ summary(wagerev_pretrend)
 
 ### --- Analysis --- ###
 # Now that assumptions have been validated, it is time to run the main Two Way Fixed Effects Difference in Differences model for this analysis.
+# The main outcome of interest is a gold standard measure of firm productivity:revenue per employee. My initial concern with using this variable was obscured findings due to firm characteristics affecting base level revenues, but fixed effects should take care of this!
+# Using rev_per_employee as my primary outcome of interest, I regress adoption status on it controlling for fixed effects through firm_id and date using clustered standard errors at the firm level 
+model_revperemp <- feols(data = merged_clean, rev_per_employee ~ adopt_t | firm_id + date, cluster = ~firm_id)
+summary(model_revperemp)
+# For the sake of robustness I will also run an OLS regression to see if findings hold (they do).
+model_revperemp_ols <- lm(data = merged_clean, rev_per_employee ~ adopt_t + firm_id + firm_sector + date)
+summary(model_revperemp_ols)
 
+# Aside from my primary outcome of interest, I am going to explore a few other relationships to hopefully strengthen my case.
+# To start, I will regress the treatment on my performance index (obviously controlling for all the other stuff).
+# This model, similarly, returns a coefficient significant at the a=0.001 level suggesting increases to firm performance resulting from opting in.
+model_performanceindex <- feols(data = merged_clean, performance_index ~ adopt_t | firm_id + date, cluster =  ~firm_id)
+summary(model_performanceindex)
 
+# I am also interested to see if opting in causes firms to change their employment numbers.
+# The answer to this seems to be no!
+model_employ <- feols(data = merged_clean, employment_t ~ adopt_t | firm_id + date, cluster =  ~firm_id)
+summary(model_employ)
 
-
-
-
-
-
-
+# On the subject of employment, I will explore how the jobs training program may affect wages.
+# seems like jobs training programs lead to increased cost of labor (a=0.001). This is interesting! 
+model_wage <- feols(data = merged_clean, wage_bill_t ~ adopt_t | firm_id + date, cluster =  ~firm_id)
+summary(model_wage)
 
 
 
