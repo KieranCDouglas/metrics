@@ -1,7 +1,8 @@
 ### --- About --- ###
 ### Project Title: SIEPR Data Task
 ### Script Name: douglas_kieran_code.R
-### Author: Kieran Douglas
+### Created By: Kieran Douglas
+### Last Edited By: Kieran Douglas
 ### Date: 10/12/2025
 ### Description: This is an empirical evaluation of the Small Business Training Program and its effect on firm productivity
 
@@ -143,7 +144,7 @@ parallel_check <- merged_clean %>%
 
 ggplot(parallel_check, aes(x = date, y = mean_revgrowth, color = factor(ever_adopted, labels = c("Not Adopted", "Adopted")), group = ever_adopted)) +
   geom_smooth(size = 1.6) +
-  labs(title = "Parallel Trends Assumption Check 1",x = "Year", y = "Mean Revenue Growth (%)", color = "Adoption Status") +
+  labs(title = "Parallel Trends Assumption Check 1", color = "Adoption Status") +
   theme_fivethirtyeight() +
   xlim(as.Date("2010-01-01"), as.Date("2012-12-31")) +
   ylim(0,10) +
@@ -157,7 +158,7 @@ parallel_check <- merged_clean %>%
 
 ggplot(parallel_check, aes(x = date, y = salesmed, color = factor(ever_adopted, labels = c("Not Adopted", "Adopted")), group = ever_adopted)) +
   geom_smooth(size = 1.6) +
-  labs(title = "Parallel Trends Assumption Check 2", x = "Year", y = "Median Number of Sales Per Month", color = "Adoption Status") +
+  labs(title = "Parallel Trends Assumption Check 2", color = "Adoption Status") +
   theme_fivethirtyeight() +
   xlim(as.Date("2010-01-01"), as.Date("2012-12-31")) +
   scale_color_manual(values = c("Not Adopted" = "#D4AFB9", "Adopted" = "#7EC4CF"))
@@ -326,6 +327,7 @@ tbl_post2013_gt <- tbl_post2013 %>%
   )
 tbl_post2013_gt
 
+# I think that's about it! 
 
 
 
