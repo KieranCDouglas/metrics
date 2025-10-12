@@ -126,17 +126,14 @@ merged_clean <- merged_clean %>%
   ungroup()
 
 # I will also create an "ever adopted" variable for assumption checks
-# Create a firm-level variable
 firm_adoption_status <- merged_clean %>%
   group_by(firm_id) %>%
   summarize(ever_adopted = as.integer(any(adopt_t == 1)))
-
-# Now I will merge it back to main df
 merged_clean <- merged_clean %>%
   left_join(firm_adoption_status, by = "firm_id")
 
-### --- Analysis --- ###
-# Before running my regressions, I will check the some assumptions of TWFE DiD
+### --- Pre-Checks --- ###
+# Before my primary analysis, I will check the some assumptions of TWFE DiD
 # The first graphic demonstrates similar trends in average revenue growth across adopters and nonadopters, with significant confidence interval overlap.
 parallel_check <- merged_clean %>%
   group_by(year_month, ever_adopted) %>%
@@ -152,7 +149,7 @@ ggplot(parallel_check, aes(x = year_month, y = mean_revgrowth, color = ever_adop
   xlim(as.Date("2010-01-01"), as.Date("2012-12-31")) +
   ylim(0,10)
 
-# The second graphic demonstrates an earnings gap between adopters and nonadopters prior to the start of the adoption period, but similar trajectory noetheless.
+# The second graphic demonstrates an earnings gap between adopters and non-adopters prior to the start of the adoption period, but similar trajectory nonetheless.
 parallel_check <- merged_clean %>%
   group_by(year_month, ever_adopted) %>%
   summarize(salesmed = median(sales_t, na.rm = TRUE)) %>%
@@ -165,4 +162,28 @@ ggplot(parallel_check, aes(x = year_month, y = salesmed, color = ever_adopted, g
   theme_linedraw() +
   xlim(as.Date("2010-01-01"), as.Date("2012-12-31"))
 
-# To supplement the imagery, I will run a pre-trend regression
+# To supplement the imagery, I will run a pre-trend linear regression. Here, I am interested in trends over time with the interaction term between time and whether or not the firm was at some point treaeted.
+# To do this, I created a pre-2013 df and regressed an interaction term between year_month and adoption on each potential outcome variable of interest.
+# The general lack of statistically significant coefficients indicates that the parallel trends assumption holds for these data. 
+pre_df <- merged_clean %>% 
+  filter(year_month < as.Date("2012-12-31"))
+
+pre_df <- pre_df %>% 
+  mutate(year = year(year_month), 
+         month = month(year_month), 
+         year_mon = format(year_month, "%Y-%m"))
+# Revenue
+revenue_pretrend <- lm(revenue_t ~ factor(year_mon) * ever_adopted, data = pre_df)
+summary(revenue_pretrend)
+# Revenue growth
+revgrowth_pretrend <- lm(revgrowth ~ factor(year_mon) * ever_adopted, data = pre_df)
+summary(revgrowth_pretrend)
+# Performance index
+index_pretrend <- lm(performance_index ~ factor(year_mon) * ever_adopted, data = pre_df)
+summary(index_pretrend)
+# Wage/revenue ratio
+wagerev_pretrend <- lm(wagerev_ratio ~ factor(year_mon) * ever_adopted, data = pre_df)
+summary(wagerev_pretrend)
+
+### --- Analysis --- ###
+# Now that assumptions have largely been validated, it is time to run the main Two Way Fixed Effects Difference in Differences model for this analysis
