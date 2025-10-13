@@ -7,8 +7,8 @@
 ### Description: This is an empirical evaluation of the Small Business Training Program and its effect on firm productivity
 
 ### --- Package installation and loading data --- ###
-install.packages(c("tidyverse", "car", "randomForest", "ivreg", "fixest", "sandwich", "lubridate", "ggthemes", "gtsummary","gt"))
-lapply(c("tidyverse", "car", "randomForest", "ivreg", "fixest", "sandwich", "lubridate", "ggthemes", "gtsummary", "gt"), library, character.only = TRUE)
+install.packages(c("tidyverse", "car", "randomForest", "ivreg", "fixest", "sandwich", "lubridate", "ggthemes", "gtsummary","gt", "modelsummary"))
+lapply(c("tidyverse", "car", "randomForest", "ivreg", "fixest", "sandwich", "lubridate", "ggthemes", "gtsummary", "gt", "modelsummary"), library, character.only = TRUE)
 # Change path names for replication
 firm_data <- read_csv("Documents/MASTERS/METRICS/code/metrics/siepr_datatask/inputs/firm_information.csv")
 ag_sales <- read_csv("Documents/MASTERS/METRICS/code/metrics/siepr_datatask/inputs/aggregate_firm_sales.csv")
@@ -95,8 +95,10 @@ filtered_data <- merged_clean %>%
 
 # At this point I have wrangled the data to exclude cases of staggered adoption, included leads for the parallel trends assumption, and merged the separate df by simplified date and firm_id.
 # The next step will be to refine the data, generate additional variables, and ensure readiness for analysis. I will convert date to a proper date in standard format by changing the day to 01 for every cell (because again, we really care about month and year). 
-merged_clean <- filtered_data %>% 
-  select(firm_id, sales_t, date, employment_t, wage_bill_t, revenue_t, adopt_t, firm_name, firm_sector) %>% 
+# Additionally, since the program is for small businesses with <=100 employees, i will filter out those with more than 100. 
+merged_clean <- filtered_data %>%
+  select(firm_id, sales_t, date, employment_t, wage_bill_t, revenue_t, adopt_t, firm_name, firm_sector) %>%
+  filter(employment_t <= 100) %>%
   group_by(firm_id) %>%
   arrange(date, .by_group = TRUE) %>%
   mutate(
@@ -104,9 +106,10 @@ merged_clean <- filtered_data %>%
     wagerev_ratio = wage_bill_t / revenue_t,
     salesgrowth = (sales_t - lag(sales_t)) / lag(sales_t),
     revgrowth = (revenue_t - lag(revenue_t)) / lag(revenue_t),
-    rev_per_employee_change = (rev_per_employee-lag(rev_per_employee))/lag(rev_per_employee),
-    date = as.Date(paste0(date, "-01"), format = "%Y-%m-%d")  ) %>%
-  ungroup() 
+    rev_per_employee_change = (rev_per_employee - lag(rev_per_employee)) / lag(rev_per_employee),
+    date = as.Date(paste0(date, "-01"), format = "%Y-%m-%d")
+  ) %>%
+  ungroup()
   
 # I will also create a firm performance index (despite having my qualms with their interpretability) for the sake of exploration and potential added robustness to my analysis. In this index, I only include change variables since firm size can paint a weird picture.
 # The index normalizes included variables by z-score and shows the number of standard deviations the firm is from the mean.
@@ -197,22 +200,23 @@ summary(model_revperemp)
 model_revperemp_ols <- lm(data = merged_clean, rev_per_employee ~ adopt_t + firm_id + firm_sector + date)
 summary(model_revperemp_ols)
 
+etable(model_revperemp)
+
 # Aside from my primary outcome of interest, I am going to explore a few other relationships to hopefully strengthen my case.
 # To start, I will regress the treatment on my performance index (obviously controlling for all the other stuff).
-# This model, similarly, returns a coefficient significant at the a=0.001 level suggesting increases to firm performance resulting from opting in.
 model_performanceindex <- feols(data = merged_clean, performance_index ~ adopt_t | firm_id + date, cluster =  ~firm_id)
 summary(model_performanceindex)
-
+etable(model_performanceindex)
 # I am also interested to see if opting in causes firms to change their employment numbers.
 # The answer to this seems to be no!
 model_employ <- feols(data = merged_clean, employment_t ~ adopt_t | firm_id + date, cluster =  ~firm_id)
 summary(model_employ)
-
+etable(model_employ)
 # On the subject of employment, I will explore how the jobs training program may affect wages.
 # seems like jobs training programs lead to increased cost of labor (a=0.001). This is interesting! 
 model_wage <- feols(data = merged_clean, wage_bill_t ~ adopt_t | firm_id + date, cluster =  ~firm_id)
 summary(model_wage)
-
+etable(model_wage)
 # I will now make a few graphics to demonstrate general characteristics of the data in addition to visualizations of the effect that the jobs training program had on business outcomes.
 # Start by factoring adoption status for interpretability
 merged_clean$ever_adopted_factor <- factor(
