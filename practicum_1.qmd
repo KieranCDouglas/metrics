@@ -155,6 +155,87 @@ The market risk premium would be unaffected in this case because there would be 
 
 #### B)
 
+In this case I think it is clear that the market risk premium would be higher by $j_m$ because it is specified that only the risk free is not being affected. If $a$ and $β$ were constant we would have $r'_p = r_f+β(r_m−r_f)+β_{jm}=r_p+β_{jm}$which absent $β_{jm}$ is just $rf+β(rm−rf)=rp$ which is just the same equation as in the typical non-January months. I think this would indicate that unable to individually identify $j_m$ CAPM wouldn't allow you to distinguish January from the rest of the months.
+
+#### C)D)
+
 ```{r}
-Starting off 
+# download monthly price data for the companies of interest: Apple, Exxon, and Chase (3 different industries).
+install.packages("tidyverse")
+install.packages("tidyquant")
+
+library(tidyquant)
+library(tidyverse)
+# Define tickers and date range
+tickers <- c("AAPL", "BAC", "XOM")
+start_date <- "2010-01-01"
+end_date <- "2019-12-31"
+
+# Download monthly prices for each ticker
+prices_monthly <- tq_get(
+  tickers,
+  from = start_date,
+  to = end_date,
+  get = "stock.prices",
+  periodicity = "monthly"
+)
+
+head(prices_monthly)
+
+prices_monthly <- prices_monthly %>%
+  mutate(jan_dummy = ifelse(month(date) == 1, 1, 0))
+
+prices_monthly <- prices_monthly %>%
+  group_by(symbol) %>%
+  arrange(date) %>%
+  mutate(rp = (adjusted / lag(adjusted)) - 1) %>%
+  ungroup()
+
+aapl <- prices_monthly |> 
+  filter(
+    symbol == "AAPL"
+  )
+xom <- prices_monthly |> 
+  filter(
+    symbol == "XOM"
+  )
+BAC <- prices_monthly |> 
+  filter(
+    symbol == "BAC"
+  )
+model_aapl <- lm(data = aapl, rp~jan_dummy)
+summary(model_aapl)
+model_bac <- lm(data = BAC, rp~jan_dummy)
+summary(model_bac)
+model_xom <- lm(data = xom, rp~jan_dummy)
+summary(model_xom)
+
+# of all 3 regressions, none demonstrate a stastistically significant association between rp and the dummy variable for january, thus we fail to reject the null and cannot determine that January is different. 
+
+# gather gspc data 
+sp500 <- tq_get("^GSPC", from = start_date, to = end_date, get = "stock.prices", periodicity = "monthly")
+sp500 <- sp500 %>% arrange(date) %>% mutate(rm = (adjusted / lag(adjusted)) - 1)
+
+# mergeeeee
+prices_monthly_joined <- prices_monthly %>% 
+  left_join(sp500 %>% select(date, rm), by = "date")
+
+# run CAPM model
+model_aapl2 <- lm(rp ~ rm + jan_dummy, data = filter(prices_monthly_joined, symbol == "AAPL"))
+summary(model_aapl2)
+
+model_xom2 <- lm(rp ~ rm + jan_dummy, data = filter(prices_monthly_joined, symbol == "XOM"))
+summary(model_xom2)
+
+model_bac2 <- lm(rp ~ rm + jan_dummy, data = filter(prices_monthly_joined, symbol == "BAC"))
+summary(model_bac2)
+# In this case the market premium definitely matters but January still does not!
 ```
+
+### E)
+
+From my analysis I can conclude that for the companies I looked at and in the time frame of interest, January was not in fact different than the other months of the year. I tested this hypothesis in various ways including a simple jan dummy in addition to running a CAPM with a separate January intercept, none of which turned up results that were statistically significant. January is NOT different.
+
+## 5) COVID Lockdown - Event Studies
+
+#### A)
