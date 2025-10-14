@@ -151,6 +151,10 @@ In my sample, large estimates of \$\\beta\$ definitely correspond with higher R^
 
 #### A)
 
+The market risk premium would be unaffected in this case because there would be no change in compensation for risk to speak of since everything is scaling up. Adding or subtracting the same amount from both of them would leave their difference unchanged. In the case that the risk free and market are affected by the same amount, using CAPM wouldn't make sense because the excess return relation would remain unchanged as stated before. It would probably make more sens to interpret January is different as something that applies to only riskier assets for it to be reasonable to test with the CAPM framework. This is due to the fact that CAPM prices excess returns while in this scenario, the risk premium would be no different than other times of the year, fuzzing any real effect.
+
+#### B)
+
 ```{r}
 Starting off 
 ```

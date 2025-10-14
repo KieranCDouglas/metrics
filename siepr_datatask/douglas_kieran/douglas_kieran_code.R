@@ -3,7 +3,7 @@
 ### Script Name: douglas_kieran_code.R
 ### Created By: Kieran Douglas
 ### Last Edited By: Kieran Douglas
-### Date: 10/13/2025
+### Date: 10/14/2025
 ### Description: This is an empirical evaluation of the Small Business Training Program and its effect on firm productivity
 
 ### --- Package installation and loading data --- ###
