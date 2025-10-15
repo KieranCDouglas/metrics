@@ -374,7 +374,7 @@ Before the lockdown, prices changes by change COST -4.52% DRI -72.65% PTON -4.76
 
 The daily return for Darden during the event window was -24.66%, -14.79%, -18.53%, +24.18%, -8%, +5%, and +31.34% while for Zoom it was +0.36%, +3%, +6.89%, +4.26%, +5.48%, +22.22%, and -15.28%.
 
-#### B)
+#### B)C)
 
 ```{r}
 gspc_df <- daily_returns %>% filter(symbol == "^GSPC") %>% select(date, sp500_return = return)
@@ -577,3 +577,7 @@ ggplot(window, aes(x = date, y = CAR)) +
   labs(title = "WMT Cumulative Abnormal Market Returns)", x = "Date", y = "Cumulative Abnormal Return") +
   theme_economist_white()
 ```
+
+I have successfully computed and plotted all of the CAR using a market model for each stock over the specified event window. SUrprisingly, Darden spiked a bit in a period where, given that it's industry, would be unexpected. After using the market model rather than just price changes, the outcome does change and the event seems to have a significant impact on Darden. This effect however, is positive??? This is odd.
+
+It seems like whether the market sees the lockdown as a good or a bad thing depends on the industry. WTM and COST have decreasing returns on average during the post lockdown period, suggesting that grocery stores see a decrease. This feels counterintuitive to me as since more people are staying home I would expect them to eat out less. Perhaps it could be that people are ordering more food now rather than going to buy things to avoid going out. Darden and Peloton see positive returns on average in the post period, which in some ways backs my arguement of people ordering takeout more often rather than going to grocery stores. I think the PTON could be explained by the fact that they focus on "connective fitness" which is largely remote (makes sense if people stay home). THe "Zoom Boom" makes a lot of sense intuitively, as people would now be more likely to meet remotely since they arent leaving their homes. I think the market viewed the effect of lockdowns on different industries differently because different industries could benefit more or less from peoples tendency to leave their homes.
