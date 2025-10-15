@@ -239,3 +239,137 @@ From my analysis I can conclude that for the companies I looked at and in the ti
 ## 5) COVID Lockdown - Event Studies
 
 #### A)
+
+```{r}
+library(tidyquant)
+library(lubridate)
+library(tidyverse)
+# Define tickers and date range
+tickers <- c("DRI", "ZM", "PTON", "COST", "WMT", "^GSPC")
+start_date <- "2019-09-19"
+end_date <- "2022-09-18"
+
+# Download daily stock prices for each ticker
+prices_daily <- tq_get(
+  tickers,
+  from = start_date,
+  to = end_date,
+  get = "stock.prices",
+  periodicity = "daily"
+)
+
+# defining date:
+event_date <- as.Date("2020-03-19")
+
+prices_daily <- prices_daily %>%
+  mutate(event_day = as.numeric(date - event_date))
+
+# calculate % change in prices before and after the event_date
+before <- prices_daily %>%
+  filter(event_day == -30 | event_day == -1) %>%
+  group_by(symbol) %>%
+  arrange(date) %>%
+  summarise(change = last(adjusted) / first(adjusted) - 1)
+after <- prices_daily %>%
+  filter(event_day == 0 | event_day == 30) %>%
+  group_by(symbol) %>%
+  arrange(date) %>%
+  summarise(change = last(adjusted) / first(adjusted) - 1)
+
+# make df for the plot
+to_plot <- prices_daily %>%
+  filter(date >= event_date %m-% months(3), date <= event_date %m+% months(1))
+
+# plotting darden adjusted over time
+to_plot %>% filter(symbol == "DRI") %>%
+  ggplot(aes(x = date, y = adjusted)) +
+  geom_line(color = "steelblue") +
+  geom_vline(xintercept = as.numeric(event_date), linetype = "dashed", color = "tan") +
+  labs(title = "DRI Stock Price",
+       x = "Date", y = "Adjusted Price") +
+        theme_economist_white()
+
+to_plot %>% filter(symbol == "ZM") %>%
+  ggplot(aes(x = date, y = adjusted)) +
+  geom_line(color = "steelblue") +
+  geom_vline(xintercept = as.numeric(event_date), linetype = "dashed", color = "tan") +
+  labs(title = "ZM Stock Price",
+       x = "Date", y = "Adjusted Price") +
+        theme_economist_white()
+#daily returns
+daily_returns <- prices_daily %>%
+  group_by(symbol) %>%
+  arrange(date) %>%
+  mutate(return = (adjusted / lag(adjusted)) - 1)
+
+est_start <- event_date %m-% months(3)
+est_end <- event_date - 1
+
+darden <- daily_returns %>% filter(symbol == "DRI")
+zoom <- daily_returns %>% filter(symbol == "ZM")
+
+# Mean return for each
+dr_mean <- darden %>%
+  filter(date >= est_start, date <= est_end) %>%
+  summarise(mu = mean(return, na.rm = TRUE)) %>% pull(mu)
+zm_mean <- zoom %>%
+  filter(date >= est_start, date <= est_end) %>%
+  summarise(mu = mean(return, na.rm = TRUE)) %>% pull(mu)
+
+# Event window (e.g., -5 to +5 days around event)
+darden_event <- darden %>%
+  filter(event_day >= -5, event_day <= 5) %>%
+  mutate(abnormal = return - dr_mean)
+zoom_event <- zoom %>%
+  filter(event_day >= -5, event_day <= 5) %>%
+  mutate(abnormal = return - zm_mean)
+
+calc_dar <- function(darden_event) {
+  darden_event %>%
+    mutate(CAR = cumsum(abnormal)) %>%
+    mutate(se = sd(abnormal, na.rm=TRUE)/sqrt(n()),
+           lower = CAR - 1.96*se, upper = CAR + 1.96*se)
+}
+
+calc_zoo <- function(zoom_event) {
+  zoom_event %>%
+    mutate(CAR = cumsum(abnormal)) %>%
+    mutate(se = sd(abnormal, na.rm=TRUE)/sqrt(n()),
+           lower = CAR - 1.96*se, upper = CAR + 1.96*se)
+}
+darden_event <- calc_CAR(darden_event)
+zoom_event   <- calc_CAR(zoom_event)
+
+# Plots for both darden and zoom for Cumulative Abnormal Returns
+ggplot(darden_event, aes(x = event_day, y = CAR)) +
+  geom_line(color = 'tan') +
+  geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.2) +
+  labs(title="Darden Event: Cumulative Abnormal Returns",
+       x = "Event Day", y = "CAR") +
+        theme_economist_white()
+
+ggplot(zoom_event, aes(x = event_day, y = CAR)) +
+  geom_line(color = 'tan') +
+  geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.2) +
+  labs(title="Darden Event: Cumulative Abnormal Returns",
+       x = "Event Day", y = "CAR") +
+        theme_economist_white()
+
+ggplot(darden_event, aes(x = event_day, y = abnormal)) +
+  geom_line(color = 'tan') +
+  geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.1) +
+  labs(title="Darden Event: Abnormal Returns",
+       x = "Event Day", y = "CAR") +
+        theme_economist_white()
+
+ggplot(zoom_event, aes(x = event_day, y = abnormal)) +
+  geom_line(color = 'tan') +
+  geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.1) +
+  labs(title="Darden Event: Abnormal Returns",
+       x = "Event Day", y = "CAR") +
+        theme_economist_white()
+```
+
+Before the lockdown, prices changes by change COST -4.52% DRI -72.65% PTON -4.76% WMT +2.47% ZM +23.16% \^GSPC -28.85%
+
+The daily return for Darden during the event window was -24.66%, -14.79%, -18.53%, +24.18%, -8%, +5%, and +31.34% while for Zoom it was +0.36%, +3%, +6.89%, +4.26%, +5.48%, +22.22%, and -15.28%.
