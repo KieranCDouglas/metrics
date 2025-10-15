@@ -373,3 +373,207 @@ ggplot(zoom_event, aes(x = event_day, y = abnormal)) +
 Before the lockdown, prices changes by change COST -4.52% DRI -72.65% PTON -4.76% WMT +2.47% ZM +23.16% \^GSPC -28.85%
 
 The daily return for Darden during the event window was -24.66%, -14.79%, -18.53%, +24.18%, -8%, +5%, and +31.34% while for Zoom it was +0.36%, +3%, +6.89%, +4.26%, +5.48%, +22.22%, and -15.28%.
+
+#### B)
+
+```{r}
+gspc_df <- daily_returns %>% filter(symbol == "^GSPC") %>% select(date, sp500_return = return)
+dri <- daily_returns %>% filter(symbol == "DRI") %>% left_join(gspc_df, by = "date")
+
+# Generate the window prior to event 
+event_date <- as.Date("2020-03-19")
+est_start <- event_date %m-% months(1)
+est_end   <- event_date - 1
+
+dri_est <- dri %>% filter(date >= est_start, date <= est_end)
+
+# run the market model similar to before
+mod <- lm(return ~ sp500_return, data = dri_est)
+alpha <- coef(mod)[1]
+beta  <- coef(mod)[2]
+# a=-0.036 and b= 1.24055
+
+# define window (1 month before/after)
+window <- dri %>% filter(date >= event_date %m-% months(1), date <= event_date %m+% months(1))
+window <- window %>% mutate(abnormal = return - (alpha + beta * sp500_return))
+
+# grab cumulative abnormal returns 
+window <- window %>%
+  mutate(CAR = cumsum(abnormal))
+
+# generate CI around the cumulative abnormal returns
+ar_sd <- sd(window$abnormal, na.rm = TRUE)
+n <- nrow(window)
+window <- window %>%
+  mutate(lower = CAR - 1.96 * ar_sd / sqrt(n),
+         upper = CAR + 1.96 * ar_sd / sqrt(n))
+
+# create a graphic of cumulative abnormal returns for the market
+ggplot(window, aes(x = date, y = CAR)) +
+  geom_line(color = 'tan') +
+  geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.1, fill = "violet") +
+  geom_vline(xintercept = as.numeric(event_date), linetype = "dashed", color = "tan") +
+  labs(title = "Darden Cumulative Abnormal Market Returns)", x = "Date", y = "Cumulative Abnormal Return") +
+  theme_economist_white()
+
+### For "ZM", "PTON", "COST", and "WMT"
+### ZM
+gspc_df <- daily_returns %>% filter(symbol == "^GSPC") %>% select(date, sp500_return = return)
+zm <- daily_returns %>% filter(symbol == "ZM") %>% left_join(gspc_df, by = "date")
+
+# Generate the window prior to event 
+event_date <- as.Date("2020-03-19")
+est_start <- event_date %m-% months(1)
+est_end   <- event_date - 1
+
+zm_est <- zm %>% filter(date >= est_start, date <= est_end)
+
+# run the market model similar to before
+mod <- lm(return ~ sp500_return, data = zm_est)
+alpha <- coef(mod)[1]
+beta  <- coef(mod)[2]
+# a=0.00986 and b= -0.0784
+
+# define window (1 month before/after)
+window <- zm %>% filter(date >= event_date %m-% months(1), date <= event_date %m+% months(1))
+window <- window %>% mutate(abnormal = return - (alpha + beta * sp500_return))
+
+# grab cumulative abnormal returns 
+window <- window %>%
+  mutate(CAR = cumsum(abnormal))
+
+# generate CI around the cumulative abnormal returns
+ar_sd <- sd(window$abnormal, na.rm = TRUE)
+n <- nrow(window)
+window <- window %>%
+  mutate(lower = CAR - 1.96 * ar_sd / sqrt(n),
+         upper = CAR + 1.96 * ar_sd / sqrt(n))
+
+# create a graphic of cumulative abnormal returns for the market
+ggplot(window, aes(x = date, y = CAR)) +
+  geom_line(color = 'tan') +
+  geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.1, fill = "violet") +
+  geom_vline(xintercept = as.numeric(event_date), linetype = "dashed", color = "tan") +
+  labs(title = "Zoom Cumulative Abnormal Market Returns)", x = "Date", y = "Cumulative Abnormal Return") +
+  theme_economist_white()
+
+### PTON
+gspc_df <- daily_returns %>% filter(symbol == "^GSPC") %>% select(date, sp500_return = return)
+pton <- daily_returns %>% filter(symbol == "PTON") %>% left_join(gspc_df, by = "date")
+
+# Generate the window prior to event 
+event_date <- as.Date("2020-03-19")
+est_start <- event_date %m-% months(1)
+est_end   <- event_date - 1
+
+pton_est <- pton %>% filter(date >= est_start, date <= est_end)
+
+# run the market model similar to before
+mod <- lm(return ~ sp500_return, data = pton_est)
+alpha <- coef(mod)[1]
+beta  <- coef(mod)[2]
+# a=0.0041 and b= 0.302
+
+# define window (1 month before/after)
+window <- pton %>% filter(date >= event_date %m-% months(1), date <= event_date %m+% months(1))
+window <- window %>% mutate(abnormal = return - (alpha + beta * sp500_return))
+
+# grab cumulative abnormal returns 
+window <- window %>%
+  mutate(CAR = cumsum(abnormal))
+
+# generate CI around the cumulative abnormal returns
+ar_sd <- sd(window$abnormal, na.rm = TRUE)
+n <- nrow(window)
+window <- window %>%
+  mutate(lower = CAR - 1.96 * ar_sd / sqrt(n),
+         upper = CAR + 1.96 * ar_sd / sqrt(n))
+
+# create a graphic of cumulative abnormal returns for the market
+ggplot(window, aes(x = date, y = CAR)) +
+  geom_line(color = 'tan') +
+  geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.1, fill = "violet") +
+  geom_vline(xintercept = as.numeric(event_date), linetype = "dashed", color = "tan") +
+  labs(title = "PTON Cumulative Abnormal Market Returns)", x = "Date", y = "Cumulative Abnormal Return") +
+  theme_economist_white()
+
+### COST
+gspc_df <- daily_returns %>% filter(symbol == "^GSPC") %>% select(date, sp500_return = return)
+cost <- daily_returns %>% filter(symbol == "COST") %>% left_join(gspc_df, by = "date")
+
+# Generate the window prior to event 
+event_date <- as.Date("2020-03-19")
+est_start <- event_date %m-% months(1)
+est_end   <- event_date - 1
+
+cost_est <- cost %>% filter(date >= est_start, date <= est_end)
+
+# run the market model similar to before
+mod <- lm(return ~ sp500_return, data = cost_est)
+alpha <- coef(mod)[1]
+beta  <- coef(mod)[2]
+# a=0.01039 and b= 0.7857
+
+# define window (1 month before/after)
+window <- cost %>% filter(date >= event_date %m-% months(1), date <= event_date %m+% months(1))
+window <- window %>% mutate(abnormal = return - (alpha + beta * sp500_return))
+
+# grab cumulative abnormal returns 
+window <- window %>%
+  mutate(CAR = cumsum(abnormal))
+
+# generate CI around the cumulative abnormal returns
+ar_sd <- sd(window$abnormal, na.rm = TRUE)
+n <- nrow(window)
+window <- window %>%
+  mutate(lower = CAR - 1.96 * ar_sd / sqrt(n),
+         upper = CAR + 1.96 * ar_sd / sqrt(n))
+
+# create a graphic of cumulative abnormal returns for the market
+ggplot(window, aes(x = date, y = CAR)) +
+  geom_line(color = 'tan') +
+  geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.1, fill = "violet") +
+  geom_vline(xintercept = as.numeric(event_date), linetype = "dashed", color = "tan") +
+  labs(title = "COST Cumulative Abnormal Market Returns)", x = "Date", y = "Cumulative Abnormal Return") +
+  theme_economist_white()
+
+### WMT
+gspc_df <- daily_returns %>% filter(symbol == "^GSPC") %>% select(date, sp500_return = return)
+wmt <- daily_returns %>% filter(symbol == "WMT") %>% left_join(gspc_df, by = "date")
+
+# Generate the window prior to event 
+event_date <- as.Date("2020-03-19")
+est_start <- event_date %m-% months(1)
+est_end   <- event_date - 1
+
+wmt_est <- wmt %>% filter(date >= est_start, date <= est_end)
+
+# run the market model similar to before
+mod <- lm(return ~ sp500_return, data = wmt_est)
+alpha <- coef(mod)[1]
+beta  <- coef(mod)[2]
+# a=0.0139 and b= 0.7895
+
+# define window (1 month before/after)
+window <- wmt %>% filter(date >= event_date %m-% months(1), date <= event_date %m+% months(1))
+window <- window %>% mutate(abnormal = return - (alpha + beta * sp500_return))
+
+# grab cumulative abnormal returns 
+window <- window %>%
+  mutate(CAR = cumsum(abnormal))
+
+# generate CI around the cumulative abnormal returns
+ar_sd <- sd(window$abnormal, na.rm = TRUE)
+n <- nrow(window)
+window <- window %>%
+  mutate(lower = CAR - 1.96 * ar_sd / sqrt(n),
+         upper = CAR + 1.96 * ar_sd / sqrt(n))
+
+# create a graphic of cumulative abnormal returns for the market
+ggplot(window, aes(x = date, y = CAR)) +
+  geom_line(color = 'tan') +
+  geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.1, fill = "violet") +
+  geom_vline(xintercept = as.numeric(event_date), linetype = "dashed", color = "tan") +
+  labs(title = "WMT Cumulative Abnormal Market Returns)", x = "Date", y = "Cumulative Abnormal Return") +
+  theme_economist_white()
+```
