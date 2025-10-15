@@ -1,6 +1,8 @@
 ---
 title: "practicum_1"
-format: html
+format:
+  pdf:
+    code-block-font-size: 0.5em
 editor: visual
 author: "Kieran Douglas"
 ---
@@ -33,15 +35,24 @@ stock_clean <- stock %>%
   ) %>% 
   na.omit()
 
-# My expectation is that Bank of America will be a riskier asset than Exxon since banks would probably be more prone to exposure to broader shifts in  the economy
-# We are using US treasury yield as the risk free rate, s&p500 index as the market rate, EXXON as the risky rate and BAC as the safe rate
+# My expectation is that Bank of America will be a riskier asset 
+# than Exxon since banks would probably be more prone
+#  to exposure to broader shifts in  the economy
+# We are using US treasury yield as the risk free rate, 
+# s&p500 index as the market rate, EXXON as the risky rate and BAC as the safe rate
 # calculate returns
-stock_clean$irx_return <- (stock_clean$`close_^IRX` - lag(stock_clean$`close_^IRX`)) /lag(stock_clean$`close_^IRX`) 
-stock_clean$xom_return <- (stock_clean$close_XOM - lag(stock_clean$close_XOM)) /lag(stock_clean$close_XOM) 
-stock_clean$bac_return <- (stock_clean$close_BAC - lag(stock_clean$close_BAC)) /lag(stock_clean$close_BAC) 
-stock_clean$gspc_return <- (stock_clean$`close_^GSPC` - lag(stock_clean$`close_^GSPC`)) /lag(stock_clean$`close_^GSPC`) 
+stock_clean$irx_return <- 
+  (stock_clean$`close_^IRX` - lag(stock_clean$`close_^IRX`)) /lag(stock_clean$`close_^IRX`) 
+stock_clean$xom_return <- 
+  (stock_clean$close_XOM - lag(stock_clean$close_XOM)) /lag(stock_clean$close_XOM) 
+stock_clean$bac_return <- 
+  (stock_clean$close_BAC - lag(stock_clean$close_BAC)) /lag(stock_clean$close_BAC) 
+stock_clean$gspc_return <- 
+  (stock_clean$`close_^GSPC` - lag(stock_clean$`close_^GSPC`)) /lag(stock_clean$`close_^GSPC`) 
 
-#Divide your sample in two, the first half spanning January 2010-December 2014, and the second half covering January 2015–December 2019. I want to work with the data from 2010-2014
+#Divide your sample in two, the first half spanning January 2010-December 2014,
+#  and the second half covering January 2015–December 2019. 
+# I want to work with the data from 2010-2014
 from2010to2014 <- stock_clean %>%
   filter(date >= as.Date("2010-01-01") & date <= as.Date("2014-12-31"))
 
@@ -81,7 +92,14 @@ summary(bac_model1)
 bac_model2 <- lm(data = from2015to2019, excessreturn_bac~mrpremium)
 summary(bac_model2)
 
-# It seems like all of my regressions came back with beta coefficients close to what would be expected if the individual stock just followed market trends. I dont see any meaningful deviation from this in the data. The only weirdness is in the alphas, where we rarely have statistical significance. This is not super surprising though, an. all alpha values are close to zero suggesting a very low excess of the stocks return being explained by more than just the beta coeficient. These are not ststistically significant though (might have to do with outliers?)
+# It seems like all of my regressions came back with beta coefficients close
+#  to what would be expected if the individual stock just followed market trends.
+#  I dont see any meaningful deviation from this in the data.
+#  The only weirdness is in the alphas, where we rarely have statistical significance.
+#  This is not super surprising though, an.
+#  all alpha values are close to zero suggesting a very low excess of the stocks
+#  return being explained by more than just the beta coeficient. 
+# These are not ststistically significant though (might have to do with outliers?)
 ```
 
 #### C)
@@ -93,7 +111,8 @@ ggplot(data = from2010to2014, mapping = aes(x = date, y = excessreturn_bac, colo
   geom_point() +
   geom_smooth(method = lm) +
   theme_light() +
-  labs(title = "Risk Premium Over Time For The Bank of America", x = "Date", y = "Risk Premium", color = "Market-Treasury Return Difference")
+  labs(title = "Risk Premium Over Time For The Bank of America", 
+  x = "Date", y = "Risk Premium", color = "Market-Treasury Return Difference")
 ```
 
 #### D)E)
@@ -104,14 +123,21 @@ Hypothesis testing! In each of these hypothesis tests there is insufficient evid
 # hpoothesis test that a=0
 linearHypothesis(bac_model1, "(Intercept) = 0")
 linearHypothesis(xom_model1, "(Intercept) = 0")
-# the f stat being effectively 0 with a relatively high p value indicates that we cannot reject the null hypothesis.
-# I think that a rejection out the null in this case would probably invalidate the results, as a nonzero alpha indicates that the market risk does not fully explain the abnormal returns. 
+# the f stat being effectively 0 with a relatively
+#  high p value indicates that we cannot reject the null hypothesis.
+# I think that a rejection out the null in this case
+#  would probably invalidate the results, as a nonzero alpha indicates
+#  that the market risk does not fully explain the abnormal returns. 
 
 # Using the li
 linearHypothesis(bac_model1, "mrpremium = 1")
 linearHypothesis(xom_model1, "mrpremium = 1")
-# from this I find that the null hypothesis can only be rejected for the more volatile industry, the Bank of America.
-# For the bank I dont find this surprising since it was shown to not follow market trends. For Exxon I also dont find the nonrejection surprising since it was fairly normal in paramaters. 
+# from this I find that the null hypothesis can only be rejected
+#  for the more volatile industry, the Bank of America.
+# For the bank I dont find this surprising since it was 
+# shown to not follow market trends. 
+# For Exxon I also dont find the nonrejection 
+# surprising since it was fairly normal in paramaters. 
 
 ```
 
@@ -145,7 +171,12 @@ print(proportion_market_risk_xom)
 
 #### G)
 
-In my sample, large estimates of \$\\beta\$ definitely correspond with higher R^2 values. This makes sense given what we have learned about the two stocks in question being pretty highly linked in behavior to broader market moves. I would not expect this to always be the case though. We could imagine a case where a stock has a very small (negative) beta value but a high R\^2. In this scenario, maybe the beta value implies effectively opposite movements to the broader market. This can still be well explained by the model, it just operates in the opposite way that we would a typical "market-tracking" stock to.^
+In my sample, large estimates of \$\\beta\$ definitely correspond with higher R^2 values.
+
+This makes sense given what we have learned about the two stocks in question being pretty 
+highly linked in behavior to broader market moves. 
+I would not expect this to always be the case though. We could imagine a 
+case where a stock has a very small (negative) beta value but a high R\^2. In this scenario, maybe the beta value implies effectively opposite movements to the broader market. This can still be well explained by the model, it just operates in the opposite way that we would a typical "market-tracking" stock to.^
 
 ## 4) Is January Different?
 
@@ -160,12 +191,13 @@ In this case I think it is clear that the market risk premium would be higher by
 #### C)D)
 
 ```{r}
-# download monthly price data for the companies of interest: Apple, Exxon, and Chase (3 different industries).
-install.packages("tidyverse")
-install.packages("tidyquant")
-
+# download monthly price data for the companies of interest:
+#  Apple, Exxon, and Chase (3 different industries).
+library(ggthemes)
 library(tidyquant)
 library(tidyverse)
+library(car)
+
 # Define tickers and date range
 tickers <- c("AAPL", "BAC", "XOM")
 start_date <- "2010-01-01"
@@ -180,56 +212,40 @@ prices_monthly <- tq_get(
   periodicity = "monthly"
 )
 
-head(prices_monthly)
-
 prices_monthly <- prices_monthly %>%
-  mutate(jan_dummy = ifelse(month(date) == 1, 1, 0))
-
-prices_monthly <- prices_monthly %>%
+  mutate(jan_dummy = ifelse(month(date) == 1, 1, 0)) %>%
   group_by(symbol) %>%
   arrange(date) %>%
   mutate(rp = (adjusted / lag(adjusted)) - 1) %>%
   ungroup()
 
-aapl <- prices_monthly |> 
-  filter(
-    symbol == "AAPL"
-  )
-xom <- prices_monthly |> 
-  filter(
-    symbol == "XOM"
-  )
-BAC <- prices_monthly |> 
-  filter(
-    symbol == "BAC"
-  )
-model_aapl <- lm(data = aapl, rp~jan_dummy)
-summary(model_aapl)
-model_bac <- lm(data = BAC, rp~jan_dummy)
-summary(model_bac)
-model_xom <- lm(data = xom, rp~jan_dummy)
-summary(model_xom)
+# Get S&P 500 data and calculate market returns
+sp500 <- tq_get("^GSPC", from = start_date, to = end_date, get = "stock.prices", periodicity = "monthly") %>%
+  arrange(date) %>%
+  mutate(rm = (adjusted / lag(adjusted)) - 1)
 
-# of all 3 regressions, none demonstrate a stastistically significant association between rp and the dummy variable for january, thus we fail to reject the null and cannot determine that January is different. 
-
-# gather gspc data 
-sp500 <- tq_get("^GSPC", from = start_date, to = end_date, get = "stock.prices", periodicity = "monthly")
-sp500 <- sp500 %>% arrange(date) %>% mutate(rm = (adjusted / lag(adjusted)) - 1)
-
-# mergeeeee
-prices_monthly_joined <- prices_monthly %>% 
+# Merge stock and market returns
+prices_monthly_joined <- prices_monthly %>%
   left_join(sp500 %>% select(date, rm), by = "date")
 
-# run CAPM model
-model_aapl2 <- lm(rp ~ rm + jan_dummy, data = filter(prices_monthly_joined, symbol == "AAPL"))
-summary(model_aapl2)
+# Filter out rows with NA in rp or rm before running regressions
+run_model <- function(symbol) {
+  data <- prices_monthly_joined %>%
+    filter(symbol == symbol, !is.na(rp), !is.na(rm))
+  model <- lm(rp ~ rm + jan_dummy, data = data)
+  summary(model)
+}
 
-model_xom2 <- lm(rp ~ rm + jan_dummy, data = filter(prices_monthly_joined, symbol == "XOM"))
-summary(model_xom2)
+# Run and print summaries for each company
+cat("AAPL:\n")
+print(run_model("AAPL"))
+cat("\nXOM:\n")
+print(run_model("XOM"))
+cat("\nBAC:\n")
+print(run_model("BAC"))
 
-model_bac2 <- lm(rp ~ rm + jan_dummy, data = filter(prices_monthly_joined, symbol == "BAC"))
-summary(model_bac2)
-# In this case the market premium definitely matters but January still does not!
+# In this case the market premium definitely matters 
+# but January still does not!
 ```
 
 ### E)
@@ -337,8 +353,9 @@ calc_zoo <- function(zoom_event) {
     mutate(se = sd(abnormal, na.rm=TRUE)/sqrt(n()),
            lower = CAR - 1.96*se, upper = CAR + 1.96*se)
 }
-darden_event <- calc_CAR(darden_event)
-zoom_event   <- calc_CAR(zoom_event)
+darden_event <- calc_dar(darden_event)
+zoom_event   <- calc_zoo(zoom_event)
+
 
 # Plots for both darden and zoom for Cumulative Abnormal Returns
 ggplot(darden_event, aes(x = event_day, y = CAR)) +
