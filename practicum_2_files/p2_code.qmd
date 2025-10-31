@@ -8,6 +8,130 @@ author: "Kieran Douglas"
 ---
 # 2. Examining Waugh’s 1927 Asparagus Data
 ### A.
+We can see that the greatest difference between coeff estimates and those reported in the question are in the number of stalks and the variation in size (nostalks and disp). These end up being an absolute difference of 0.1767 and 0.0697 respecitvely. 
+
+```{r}
+# Set up environment and load data
+library(tidyverse)
+library(readr)
+library(fixest)
+
+waugh <- read_table("/Users/kieran/Documents/MASTERS/METRICS/code/metrics/practicum_2_files/waugh.txt")
+waugh_clean <- waugh |> 
+  rename(
+    green = "GREEN",
+    nostalks = "NOSTALKS",
+    disp = "DISPERSE",
+    price = "PRICE"
+  ) |> 
+   mutate(
+      green = as.numeric(green),
+      nostalks = as.numeric(nostalks),
+      disp = as.numeric(disp),
+      price = as.numeric(price)
+    )
+
+# Run a MLR
+model1 = lm(price ~ green+nostalks+disp, data = waugh_clean)
+summary(model1)
+
+# compare coefficient estimates
+coeffs = coefficients(model1)
+original_coeffs = c(green = 0.13826, nostalks = -1.53394, disp = -0.27554)
+differences <- coeffs[names(original_coeffs)] - original_coeffs
+print(differences)
+# We can see that the greatest difference between coeff estimates and those reported in the question are in the number of stalks and the variation in size (nostalks and disp). These end up being an absolute difference of 0.1767 and 0.0697 respecitvely. 
+```
+
+### B. 
+It looks like the main issue here is that Waugh has transformed green color on the asparagus variable to inches rather than what I have in the raw data, being hundredths of inches. To fix this I need to rescale the variable green by dividing it by 100. After doing this the difference in means is no longer a problem. 
+```{r}
+means <- c(price_avg = mean(waugh_clean$price), green_avg = mean(waugh_clean$green), nostalks_avg = mean(waugh_clean$nostalks), disp_avg = mean(waugh_clean$disp))
+print(means)
+means_reported <- c(price_avg = 90.095, green_avg = 5.8875, nostalks_avg = 19.555, disp_avg = 14.875)
+differences_avg <- means[names(means_reported)] - means_reported
+print(differences_avg)
+# It looks like the main issue here is that Waugh has transformed green color on the asparagus variable to inches rather than what I have in the raw data, being hundredths of inches. To fix this I need to rescale the variable green by dividing it by 100. 
+waugh_clean <- waugh_clean |> 
+  mutate(
+    green = green/100
+  )
+# Recheck mean differences
+means_recheck <- c(price_avg = mean(waugh_clean$price), green_avg = mean(waugh_clean$green), nostalks_avg = mean(waugh_clean$nostalks), disp_avg = mean(waugh_clean$disp))
+print(means_recheck)
+
+```
+
+### C.
+I notice relative variance in the relative size of the covariances reported. For example, the covariance between price and green according to Waugh is ~3430 while the one I found was 3448 (larger). On the other hand, Waugh found a covairance of ~-154 for green and disp while I found one of ~-180 (mine was smaller). In other cases though mine was larger like with the cov between green and price. I think that the pattern in differences may relate to the way my price variable is coded relative to Waugh's. This would explain the constant differences in price covariance versus the more consistent findings in ohter categories. 
+```{r}
+# I am now going to create a variance covariance matrix similar to Waugh's`
+moments_subset <- waugh_clean[, c("price", "green", "nostalks", "disp")]
+# to match the layout of the table provided I will modify green to be back to hundredths of an inch.
+moments_subset <- moments_subset |> 
+  mutate(
+    green = green*100
+  )
+# Create the matric, format it correctly, and print
+matrix <- cov(moments_subset)
+print(matrix)
+matrix_fmt <- formatC(matrix, format="f", digits=1)
+matrix_fmt[lower.tri(matrix_fmt)] <- ""
+print(noquote(matrix_fmt))
+```
+
+### D.
+It is plausible that the principle findings concerning the effects of covariate variation could be affected in terms of the precision and statistical inference of coefficient estimates if there was underestimation or misreporting of variance and covariance among regressors. Depsite OLS estimates remaining unbiased under GM, Waugh's under or over-estiamted variance and coveriance could lead to underestiated standard errors and possibly inacurate significance. Similarly, cov among the regressors included may inflate the standard errors and lead to reductions in the validity/reliability of estimates. The difference in scaled coefficients between Waugh's and my own analysis do not differ too much, but there are some clear differences. For example, my estimate for the marginal effect of a unit increase in the number of stalks per bunch is about $0.5 less than Waugh's. I estimate a slightly higher increase in price given a unit increase in green, and a roughly $0.2 larger decrease in price given a unit increase in size variation. Overall, our estimates are very similar. I find the association between both green and nostalks with price to be highly statistically significant at the p<0.001 level and the association between disp and price to be statistically signifiacnt at **0.001<p<0.01** level. All of these observations are ceterus parabus. 
+
+ ```{r}
+  # run model
+coef(model1) * 2.782
+waugh_scaled <- original_coeffs*2.782
+print(waugh_scaled)
+ 
+# The difference in scaled coefficients between Waugh's and my own analysis do not differ too much, but there are some clear differences. For example, my estimate for the marginal effect of a unit increase in the number of stalks per bunch is about $0.5 less than Waugh's. I estimate a slightly higher increase in price given a unit increase in green, and a roughly $0.2 larger decrease in price given a unit increase in size variation. Overall, our estimates are very similar. I find the association between both green and nostalks with price to be highly statistically significant at the p<0.001 level and the association between disp and price to be statistically signifiacnt at 0.001<p<0.01 level. All of these observations are ceterus parabus. 
+ ```
+
+### E. 
+To solve this I am going to experiment with a matrix. 
+``` {r}
+# my matrix solutions
+# Extract covariance matrix of regressors (columns and rows 2 to 4)
+xx <- matrix[2:4, 2:4]
+# Extract covariance vector of PRICE with regressors (row 1, columns 2 to 4)
+xy <- matrix[1, 2:4]
+# Compute beta_hat = solve(Sigma_XX) %*% Sigma_XY
+beta_hat <- solve(xx) %*% xy
+print(beta_hat)
+
+# Waugh's matrix solutions
+vc_mat <- matrix(c(
+  1063.64, 3430.89, -100.92, -82.35,
+  3430.89, 24317.19, -17.01, -154.54,
+  -100.92, -17.01, 61.33, 25.51,
+  -82.35, -154.54, 25.51, 83.07
+), nrow = 4, byrow = TRUE)
+# names for reference
+row_col_names <- c("price","green","nostalks","disp")
+dimnames(vc_mat) <- list(row_col_names, row_col_names)
+# price-cov covariance vector
+Sigma_yX <- vc_mat["price", c("green", "nostalks", "disp")]
+# covariate-covariance matrix
+Sigma_XX <- vc_mat[c("green", "nostalks", "disp"), c("green", "nostalks", "disp")]
+# raw coefficients from matrix
+beta_raw <- solve(Sigma_XX, Sigma_yX)
+names(beta_raw) <- c("green", "nostalks", "disperse")
+# scale
+beta_final <- beta_raw * 2.782
+beta_final
+# Computing the least squares estimates from Waugh's VC matrix table, we can see that his estimates are fairly similar in absolute value to mine. The differences in findings may come down to several factors, including that perhaps due to the nature of OLS and our estimators being assumed to be BLUE, we have better linear unbiased estimators than Waugh was able to find. It is possible that he could have faced some rounding errors here and there that I did not, both in the calculation of his var-cov matrix and his coefficients. 
+```
+
+# 3. Exploring Relationships among $R^2$, Coeﬃcients of Determination, and Correlation Coeﬃcients
+### A.
+
 ```{r}
 
 ```
+
+
