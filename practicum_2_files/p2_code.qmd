@@ -1,0 +1,13 @@
+---
+title: "Practicum 2"
+format:
+  pdf:
+    code-block-font-size: 0.5em
+editor: visual
+author: "Kieran Douglas"
+---
+# 2. Examining Waugh’s 1927 Asparagus Data
+### A.
+```{r}
+
+```
