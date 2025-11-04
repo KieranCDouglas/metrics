@@ -148,20 +148,55 @@ print(cor_matrix_char, quote = FALSE)
 ```
 
 ### B.
-
-
-regressions, PRICE on GREEN, PRICE on NOSTALKS, and PRICE on DIS-
-PERSE, where each regression also includes a constant term. Take the R2 from each of these three
-simple regressions, and compute its square root. Then compare its value with the appropriate
-correlation coeﬃcient reported in the first row of the above table. Why are they equal (except
-for sign)? Now suppose you had messed up and had inadvertently run the ”reverse” regressions.
-GREEN on PRICE, NOSTALKS on PRICE, and DISPERSE on PRICE. What R2 measures would
-you have obtained? Why do they equal those from the ”correct” regressions?
-
+Comparing the square roots calculated of the R^2 I can see that they are equal except for sign. This is because the correlation coefficient can be negative (between -1 and 1) but the coiefficient of determination will always be positive (between 0 and 1) since its the squared correlation coefficient. If I had run the reverse regressios the R^2 measures would be the same as those from the correct regressions because when dealing with the same two variables, the ammount of variation explained in one variable by the other will be constant since again, it is the squares correlation coefficient. Reversing their order has no impact on the ammount of variation explained that our R^2 captures. 
 ```{r}
 # price model
-pricemodel <- lm(data = waugh_clean, price ~ green+nostalks+disp)
+pricegreenmodel <- lm(data = waugh_clean, price ~ green)
+pricenostalksmodel <- lm(data = waugh_clean, price ~ nostalks)
+pricedispmodel <- lm(data = waugh_clean, price ~ disp)
+#price on green 
+summary(pricegreenmodel)
+sqrt(0.56)
+# price on nostalks
+summary(pricenostalksmodel)
+sqrt(0.1653)
+# price on disp
+summary(pricedispmodel)
+sqrt(0.1054)
+```
+
+### C.
+I expect that if I add the regressor nostalks to the regression, the R^2 will increase. This is because we have seperately confirmed that variation in nostalks explains some of the variation in price, so if we add it to the regression, the models explanatory power should increase. Given the correlation between green and nostalks in the table I would expect the change in R^2 when nostalks is added to the regression to be large. My intuition is such that since the two variables are not super correlated BUT are indidivually correlated with price, they should explain a significant ammount of the variation in price when both included as regressors. Running the regression confirms my intuition, as the R^2 is increased by nearly 15 points, representing a significant jump. Further, comparing the R^2 between the model that regressed price on green to the model that regressed price on green AND disp, we can see another increase in the R^2 equating to about 5 points. This represents an interesting jump, despite it being smaller in magnitude to the previous change in R^2. I think this is consistent with the sample correlation between green and disp, which is bigger than that between green and nostalks but still not so big as to fail in adding additional explanation to the model. Finally, when comparing the price on nostalks model to the price on nostalks AND disp model, we also observe a jump in R^2 that is about 4 points. This is again smaller than previous jumps and can probably be explained by the higher correlation coefficient between nostalks and disp that comes out to 0.35003, an R that would suggest higher correlation between the two explanatory variables and thus a smaller increase to the R^2 when both included in a model explaining price. This is consistent with the previous findings regarding the effect of adding correlated explanatory variables to a model. I think this is why would prioritize using adjusted R^2 since that measure penalizes for adding less relavent variables. 
+```{r}
+green_nostalks_model <- lm(data = waugh_clean, price~green+nostalks)
+summary(green_nostalks_model)
+summary(pricegreenmodel)
+
+green_disp_model <- lm(data = waugh_clean, price~green+disp)
+summary(green_disp_model)
+summary(pricegreenmodel)
+
+nostalks_disp_model <- lm(data = waugh_clean, price~nostalks+disp)
+summary(nostalks_disp_model)
+summary(pricenostalksmodel)
+```
+
+### D.
+Here I notice the same trend, where the R^2 for the full regression is 0.7268 while the summed R^2 from the single regressions is 0.8307. I think this is because in this case, the model accounts for overlaps in explanatory power between the regressors that are not even a question in the single models. I think this is becasue the multiple regression avoids double counting, providing the joint effect on price. 
+```{r}
+fullmodel <- lm(data = waugh_clean, price~nostalks+green+disp)
+summary(fullmodel)
+# R^2 of 0.7268
+0.56+0.1653+0.1054
+# sum of individual R^2 = 0.8307
 
 ```
+
+### E. 
+
+```{r}
+
+```
+
 
 
