@@ -149,7 +149,18 @@ print(cor_matrix_char, quote = FALSE)
 
 ### B.
 
+
+regressions, PRICE on GREEN, PRICE on NOSTALKS, and PRICE on DIS-
+PERSE, where each regression also includes a constant term. Take the R2 from each of these three
+simple regressions, and compute its square root. Then compare its value with the appropriate
+correlation coeﬃcient reported in the first row of the above table. Why are they equal (except
+for sign)? Now suppose you had messed up and had inadvertently run the ”reverse” regressions.
+GREEN on PRICE, NOSTALKS on PRICE, and DISPERSE on PRICE. What R2 measures would
+you have obtained? Why do they equal those from the ”correct” regressions?
+
 ```{r}
+# price model
+pricemodel <- lm(data = waugh_clean, price ~ green+nostalks+disp)
 
 ```
 
