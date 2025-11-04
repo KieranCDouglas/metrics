@@ -129,6 +129,25 @@ beta_final
 
 # 3. Exploring Relationships among $R^2$, Coeﬃcients of Determination, and Correlation Coeﬃcients
 ### A.
+Based on the cor matrix, it is evident that the most highly correlated variables are price and green, price and nostalks, nostalks and disp, and price and disp (ordered from highest to lowest positive and negative correlation). The most orthogonal correlations are between green and nostalks and green and disp becasue each of their correlations is quite close to zero, thus implying low to no real linear relationship between the variables based on the data we have available. 
+```{r}
+# create cor matrix
+order <- c("price", "green", "nostalks", "disp")
+cor_matrix <- cor(waugh_clean)
+cor_matrix <- cor_matrix[order, order]
+
+# round the matrix 
+cor_matrix_rounded <- round(cor_matrix, 5)
+
+# lower triangle with empty strings 
+cor_matrix_char <- format(cor_matrix_rounded, nsmall = 5)
+cor_matrix_char[lower.tri(cor_matrix_char)] <- ""
+
+print(cor_matrix_char, quote = FALSE)
+# based on the cor matrix, it is evident that the most highly correlated variables are price and green, price and nostalks, nostalks and disp, and price and disp (ordered from highest to lowest positive and negative correlation). 
+```
+
+### B.
 
 ```{r}
 
