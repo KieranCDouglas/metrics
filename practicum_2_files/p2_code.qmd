@@ -194,23 +194,14 @@ summary(fullmodel)
 
 ### E. 
 Waugh's interpretation of the coefficient of determination is incorrect. His method of adding up individual coeficients of determination is not the right way to do it, as we know the explanatory variables he is including are not orthogonal. Waugh should have first correctly calculated and second explained that the coefficient of determination is the portion of variance in price that is jointly explained by variance in the explanatory variables, and in the case of this model, it is equal to about 0.72 or 72%. 
-```{r}
-# nostalks
-numerator1 <- cov(waugh_clean$nostalks, waugh_clean$price) * (nrow(waugh_clean) - 1)
-denominator1 <- var(waugh_clean$price) * (nrow(waugh_clean) - 1)
-ratio1 <- numerator1 / denominator1
-ratio1*-1.3573
-# green
-numerator2 <- cov(waugh_clean$green, waugh_clean$price) * (nrow(waugh_clean) - 1)
-denominator2 <- var(waugh_clean$price) * (nrow(waugh_clean) - 1)
-ratio2 <- numerator2 / denominator2
-ratio2*13.7598
-# disp
-numerator3 <- cov(waugh_clean$disp, waugh_clean$price) * (nrow(waugh_clean) - 1)
-denominator3 <- var(waugh_clean$price) * (nrow(waugh_clean) - 1)
-ratio3 <- numerator3 / denominator3
-ratio3*-0.3453
 
+```{r}
+# nostalks = 0.14554
+-1.53394 * (-100.92 / 1063.64)
+# green = 0.44597
+0.13826 * (3430.89 / 1063.64)
+# disp = 0.02133
+-0.27554 * (-82.35 / 1063.64)
 ```
 
 ### F.
