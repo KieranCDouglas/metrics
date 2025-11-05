@@ -193,6 +193,39 @@ summary(fullmodel)
 ```
 
 ### E. 
+Waugh's interpretation of the coefficient of determination is incorrect. His method of adding up individual coeficients of determination is not the right way to do it, as we know the explanatory variables he is including are not orthogonal. Waugh should have first correctly calculated and second explained that the coefficient of determination is the portion of variance in price that is jointly explained by variance in the explanatory variables, and in the case of this model, it is equal to about 0.72 or 72%. 
+```{r}
+# nostalks
+numerator1 <- cov(waugh_clean$nostalks, waugh_clean$price) * (nrow(waugh_clean) - 1)
+denominator1 <- var(waugh_clean$price) * (nrow(waugh_clean) - 1)
+ratio1 <- numerator1 / denominator1
+ratio1*-1.3573
+# green
+numerator2 <- cov(waugh_clean$green, waugh_clean$price) * (nrow(waugh_clean) - 1)
+denominator2 <- var(waugh_clean$price) * (nrow(waugh_clean) - 1)
+ratio2 <- numerator2 / denominator2
+ratio2*13.7598
+# disp
+numerator3 <- cov(waugh_clean$disp, waugh_clean$price) * (nrow(waugh_clean) - 1)
+denominator3 <- var(waugh_clean$price) * (nrow(waugh_clean) - 1)
+ratio3 <- numerator3 / denominator3
+ratio3*-0.3453
+
+```
+
+### F.
+Right off the bat I notice that the R^2 calculated are the same! I think this happened because by regressing price on a vector of fitted values that were fitted on a regression on price, I am effectively decomposing price to simply its predicted and residual parts. As for the intercept coefficient of 0 and the slope coefficient of 1, I think this is due to the fact that the vector of fitted values is a linear transformation of the original regressors, meaning that when I go onto regress price on that vector, the best linear fit for it would be a zero intercept and a 1 slope. This is because the fitted values generated are the closest possible linear predictors of the observed data. 
+
+```{r}
+fullmodel <- lm(data = waugh_clean, price~nostalks+green+disp)
+summary(fullmodel)
+fitted <- fitted(fullmodel)
+fitmodel <- lm(waugh_clean$price~fitted)
+summary(fitmodel)
+```
+
+# 4. Assessing the Stability of the Hedonic Price Equation for the First and Second-Generation Computers
+### A.
 
 ```{r}
 
