@@ -221,7 +221,6 @@ Chow's model: LN_RENT= β0 + β1LN_MEM + β2LN_MULT + β3LN_ACCESS + u
 
 
 ```{r}
-install.packages("readxl")
 library("readxl")
 chow <- read_excel('/Users/kieran/Documents/MASTERS/METRICS/code/metrics/practicum_2_files/Practicum 2 Chow Data ARE 256A FQ 2025.xlsx')
 
@@ -253,7 +252,7 @@ chow_clean <- chow |>
 # create cor matrix
 order_chow <- c("ln_rent", "ln_mem", "ln_mult", "ln_access")
 cor_matrix_chow <- cor(chow_clean)
-cor_matrix_chow <- cor_matrix[order_chow, order_chow]
+# cor_matrix_chow <- cor_matrix[order_chow, order_chow]
 
 # round the matrix 
 cor_matrix_rounded_chow <- round(cor_matrix_chow, 5)
@@ -265,41 +264,93 @@ cor_matrix_char_chow[lower.tri(cor_matrix_char_chow)] <- ""
 print(cor_matrix_char_chow, quote = FALSE)
 
 # now its time to run the constrained and unconstrained models
+# Common slopes, different intercepts by year
+pooled <- lm(data = constr_chow, ln_rent~factor(year)+ln_mem+ln_mult+ln_access)
+rss_pooled <- sum(resid(pooled)^2)
+
+# allowed to differ
+library(broom)
+by_year <- constr_chow %>%
+  group_by(year) %>%
+  do(tidy(lm(ln_rent ~ ln_mem + ln_mult + ln_access, data = .)))
+by_year
+
+# cell-means parameterization: per-year intercepts and per-year slopes
+m_interacted_cm <- lm(y ~ factor(year) + factor(year):x1 + factor(year):x2, data = df)
+summary(m_interacted_cm)
+
+
 #constrained data and model
 constr_chow <- chow_clean |> 
   filter(year %in% c(60, 61, 62, 63, 64, 65))
-constrained <-lm(chow_clean, )
-)
 
-constrained_model <- lm(data = constr_chow, ln_rent~ln_mem+ln_mult+ln_access)
-summary(constrained_model)
 
-# unconstrained model
-years <- 60:65
-rss_sep <- 0
-n_sep <- 0
 
-for (yr in years) {
-  subset_year <- constr_chow |> filter(year == yr)
-  model_year <- lm(ln_rent ~ ln_mem + ln_mult + ln_access, data = subset_year)
-  rss_sep <- rss_sep + sum(resid(model_year)^2)
-  n_sep <- n_sep + nrow(subset_year)
+# fit pooled model and get its rss
+pooled <- lm(ln_rent ~ factor(year) + ln_mem + ln_mult + ln_access, data = constr_chow)
+RSS_pooled <- sum(resid(pooled)^2)
+
+# run separate regressions by year and sum RSSs
+years <- unique(constr_chow$year)
+RSS_years <- 0
+nyears <- length(years)
+k <- 4  
+N_total <- 0
+for (yy in years) {
+  sub <- subset(constr_chow, year == yy)
+  fit <- lm(ln_rent ~ ln_mem + ln_mult + ln_access, data = sub)
+  RSS_years <- RSS_years + sum(resid(fit)^2)
+  N_total <- N_total + nrow(sub)
 }
 
-# extractingt the important stats
-rss_pooled <- sum(resid(constrained_model)^2)
-n_pooled <- nrow(constr_chow)
-k <- length(coef(constrained_model))
+# Step 3: Calculate degrees of freedom
+numerator_df <- k * (nyears - 1)
+denominator_df <- N_total - k * nyears
 
-g <- length(years)         
-q <- (g - 1) * (k - 1)    
-df1 <- q
-df2 <- n_sep - g * k
+# Step 4: Calculate Chow F-statistic
+F_stat <- ((RSS_pooled - RSS_years) / numerator_df) / (RSS_years / denominator_df)
 
-F_stat <- ((rss_pooled - rss_sep) / df1) / (rss_sep / df2)
-p_value <- pf(F_stat, df1, df2, lower.tail = FALSE)
+# Step 5: Find p-value
+p_value <- pf(F_stat, numerator_df, denominator_df, lower.tail = FALSE)
 
-cat("F-statistic:", F_stat, "\nP-value:", p_value, "\n")
+# Show results
+cat(sprintf("Chow F-statistic: %.4f, df = (%d, %d), p-value = %.4g\n", F_stat, numerator_df, denominator_df, p_value))
+
+# now to do the same but for the years 50-59
+# Step 1: Filter data for years 54–59
+constr_chow_old <- chow_clean %>% 
+  filter(year %in% c(54, 55, 56, 57, 58, 59))
+
+# Step 2: Fit pooled model for those years
+pooled_old <- lm(ln_rent ~ factor(year) + ln_mem + ln_mult + ln_access, data = constr_chow_old)
+RSS_pooled_old <- sum(resid(pooled_old)^2)
+
+# Step 3: Run separate regressions and sum RSSs for each year (from constr_chow_old)
+years_old <- unique(constr_chow_old$year)
+RSS_years_old <- 0
+nyears_old <- length(years_old)
+k_old <- 4  # If 3 slopes + intercept
+N_total_old <- 0
+for (yy in years_old) {
+  sub_old <- subset(constr_chow_old, year == yy)
+  fit_old <- lm(ln_rent ~ ln_mem + ln_mult + ln_access, data = sub_old)
+  RSS_years_old <- RSS_years_old + sum(resid(fit_old)^2)
+  N_total_old <- N_total_old + nrow(sub_old)
+}
+
+# Step 4: Calculate degrees of freedom
+numerator_df_old <- k_old * (nyears_old - 1)
+denominator_df_old <- N_total_old - k_old * nyears_old
+
+# Step 5: Calculate Chow F-statistic
+F_stat_old <- ((RSS_pooled_old - RSS_years_old) / numerator_df_old) / (RSS_years_old / denominator_df_old)
+p_value_old <- pf(F_stat_old, numerator_df_old, denominator_df_old, lower.tail = FALSE)
+
+cat(sprintf(\
+  "Chow F-statistic: %.4f, df = (%d, %d), p-value = %.4g\n",
+  F_stat_old, numerator_df_old, denominator_df_old, p_value_old))
+
+
 ```
 
 
