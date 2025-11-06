@@ -406,8 +406,34 @@ cat(sprintf("Chow F-statistic: %.4f, df = (%d, %d), p-value = %.4g\n", F_stat, n
 
 # 5. Using Time-Varying Hedonic Price Equations to Construct Chained Price Indexes for Computers
 ### A.
+In comparing the year-to-year changes in the estimated coeﬃcients of the 11 dummy variables with the levels of the βt estimates, I can see that the estimates are relatively close to each other between methods, with directionality consistently matching. I do see the potential for higher order interactions to exist that arent captured in the smaller adjacent year regressions. This could be due to slope inconsistency or potentially omitted interactions. I think it is appropriate to compare year-to-year changes in the estimated dummy variable coeﬃcients with levels of the estimated βt because both methods provide estimates of the annual adjusted price change. THey are both expected to be similar if the model is well specified and if the sample sizes are of reasonable size. I notice some more substantial differences between the years 56, 57, and 62, which could be the result of the adjacent year models' use of only two years of data per estimate. It could similarly have to do with the pooled version using data from all of the years which could effectively smooth away more volatility per year. I think the differences could be the result of either actual heterogeneity being picked up by the models, or some sort of misspecification due to the nature of the approaches taken. 
 ```{r}
+# create lists to store results
+adjacent_betas <- numeric()
+years <- 54:64 # last pair is 64-65
 
+for (yy in years) {
+  # filter data for the adjacent years
+  dat_pair <- chow_clean %>%
+    filter(year %in% c(yy, yy + 1)) %>%
+    mutate(dummy = ifelse(year == (yy + 1), 1, 0))
+
+  # run regression
+  fit <- lm(ln_rent ~ dummy + ln_mem + ln_mult + ln_access, data = dat_pair)
+  # extract beta for the adjacent year dummy (beta t)
+  beta_t <- coef(fit)["dummy"] # get coefficient by name
+  adjacent_betas <- c(adjacent_betas, beta_t)
+}
+
+# year names for each beta coefficient
+names(adjacent_betas) <- paste0('beta_', as.character(55:65))
+
+# print out the adjacent year beta estimates
+print(adjacent_betas)
+
+# now for the traditional hedonic approach on the 11 dummies and other variables
+hedonic_time_dummy <- lm(ln_rent ~ factor(year) + ln_mem + ln_mult + ln_access, data = chow_clean)
+summary(hedonic_time_dummy)
 ```
 
 
