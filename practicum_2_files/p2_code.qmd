@@ -217,9 +217,89 @@ summary(fitmodel)
 
 # 4. Assessing the Stability of the Hedonic Price Equation for the First and Second-Generation Computers
 ### A.
+Chow's model: LN_RENT= β0 + β1LN_MEM + β2LN_MULT + β3LN_ACCESS + u
+
 
 ```{r}
+install.packages("readxl")
+library("readxl")
+chow <- read_excel('/Users/kieran/Documents/MASTERS/METRICS/code/metrics/practicum_2_files/Practicum 2 Chow Data ARE 256A FQ 2025.xlsx')
 
+# data cleaning and constructions
+chow_clean <- chow |> 
+  rename(
+    obs = "Obs",
+    volume = "VOLUME",
+    rent = "RENT",
+    binary = "BINARY",
+    digits = "DIGITS",
+    words = "WORDS",
+    add = "ADD",
+    mult = "MULT",
+    access = "ACCESS",
+    year = "YEAR",
+    order = "ORDER",
+    ibmdum = "IBMDUM"
+  ) |> 
+    mutate(
+      ln_rent = log(rent),
+      ln_mult = log(mult),
+      ln_access = log(access),
+      ln_add = log(add),
+      mem = words*binary*digits,
+      ln_mem = log(mem)
+    )
+# constructing clope coefficients like in 3.a.
+# create cor matrix
+order_chow <- c("ln_rent", "ln_mem", "ln_mult", "ln_access")
+cor_matrix_chow <- cor(chow_clean)
+cor_matrix_chow <- cor_matrix[order_chow, order_chow]
+
+# round the matrix 
+cor_matrix_rounded_chow <- round(cor_matrix_chow, 5)
+
+# lower triangle with empty strings 
+cor_matrix_char_chow <- format(cor_matrix_rounded_chow, nsmall = 5)
+cor_matrix_char_chow[lower.tri(cor_matrix_char_chow)] <- ""
+
+print(cor_matrix_char_chow, quote = FALSE)
+
+# now its time to run the constrained and unconstrained models
+#constrained data and model
+constr_chow <- chow_clean |> 
+  filter(year %in% c(60, 61, 62, 63, 64, 65))
+constrained <-lm(chow_clean, )
+)
+
+constrained_model <- lm(data = constr_chow, ln_rent~ln_mem+ln_mult+ln_access)
+summary(constrained_model)
+
+# unconstrained model
+years <- 60:65
+rss_sep <- 0
+n_sep <- 0
+
+for (yr in years) {
+  subset_year <- constr_chow |> filter(year == yr)
+  model_year <- lm(ln_rent ~ ln_mem + ln_mult + ln_access, data = subset_year)
+  rss_sep <- rss_sep + sum(resid(model_year)^2)
+  n_sep <- n_sep + nrow(subset_year)
+}
+
+# extractingt the important stats
+rss_pooled <- sum(resid(constrained_model)^2)
+n_pooled <- nrow(constr_chow)
+k <- length(coef(constrained_model))
+
+g <- length(years)         
+q <- (g - 1) * (k - 1)    
+df1 <- q
+df2 <- n_sep - g * k
+
+F_stat <- ((rss_pooled - rss_sep) / df1) / (rss_sep / df2)
+p_value <- pf(F_stat, df1, df2, lower.tail = FALSE)
+
+cat("F-statistic:", F_stat, "\nP-value:", p_value, "\n")
 ```
 
 
