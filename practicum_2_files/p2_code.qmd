@@ -217,8 +217,13 @@ summary(fitmodel)
 
 # 4. Assessing the Stability of the Hedonic Price Equation for the First and Second-Generation Computers
 ### A.
+### B.
 Chow's model: LN_RENT= β0 + β1LN_MEM + β2LN_MULT + β3LN_ACCESS + u
+My first f-test yielded the following statistics: Chow F-statistic: 0.5574, df = (20, 58), p-value = 0.9256
+My second f-test yielded the following statitstics: Chow F-statistic: 0.6243, df = (20, 31), p-value = 0.863723
 
+Based on these findings I fail to reject the null hypothesis, finding lack of evidence that the slopes differ. This reflects Chow's findings.  
+ 
 
 ```{r}
 library("readxl")
@@ -248,6 +253,11 @@ chow_clean <- chow |>
       mem = words*binary*digits,
       ln_mem = log(mem)
     )
+
+#constrained data and model
+constr_chow <- chow_clean |> 
+  filter(year %in% c(60, 61, 62, 63, 64, 65))
+
 # constructing clope coefficients like in 3.a.
 # create cor matrix
 order_chow <- c("ln_rent", "ln_mem", "ln_mult", "ln_access")
@@ -276,13 +286,8 @@ by_year <- constr_chow %>%
 by_year
 
 # cell-means parameterization: per-year intercepts and per-year slopes
-m_interacted_cm <- lm(y ~ factor(year) + factor(year):x1 + factor(year):x2, data = df)
+m_interacted_cm <- lm(ln_rent ~ factor(year) + factor(year) + factor(year), data = chow_clean)
 summary(m_interacted_cm)
-
-
-#constrained data and model
-constr_chow <- chow_clean |> 
-  filter(year %in% c(60, 61, 62, 63, 64, 65))
 
 
 
@@ -308,7 +313,7 @@ numerator_df <- k * (nyears - 1)
 denominator_df <- N_total - k * nyears
 
 # Step 4: Calculate Chow F-statistic
-F_stat <- ((RSS_pooled - RSS_years) / numerator_df) / (RSS_years / denominator_df)
+F_stat <- ((rss_pooled - RSS_years) / numerator_df) / (RSS_years / denominator_df)
 
 # Step 5: Find p-value
 p_value <- pf(F_stat, numerator_df, denominator_df, lower.tail = FALSE)
@@ -346,9 +351,14 @@ denominator_df_old <- N_total_old - k_old * nyears_old
 F_stat_old <- ((RSS_pooled_old - RSS_years_old) / numerator_df_old) / (RSS_years_old / denominator_df_old)
 p_value_old <- pf(F_stat_old, numerator_df_old, denominator_df_old, lower.tail = FALSE)
 
-cat(sprintf(\
+cat(sprintf(
   "Chow F-statistic: %.4f, df = (%d, %d), p-value = %.4g\n",
   F_stat_old, numerator_df_old, denominator_df_old, p_value_old))
+```
+
+### C.
+
+```{r}
 
 
 ```
