@@ -407,6 +407,9 @@ cat(sprintf("Chow F-statistic: %.4f, df = (%d, %d), p-value = %.4g\n", F_stat, n
 # 5. Using Time-Varying Hedonic Price Equations to Construct Chained Price Indexes for Computers
 ### A.
 In comparing the year-to-year changes in the estimated coeﬃcients of the 11 dummy variables with the levels of the βt estimates, I can see that the estimates are relatively close to each other between methods, with directionality consistently matching. I do see the potential for higher order interactions to exist that arent captured in the smaller adjacent year regressions. This could be due to slope inconsistency or potentially omitted interactions. I think it is appropriate to compare year-to-year changes in the estimated dummy variable coeﬃcients with levels of the estimated βt because both methods provide estimates of the annual adjusted price change. THey are both expected to be similar if the model is well specified and if the sample sizes are of reasonable size. I notice some more substantial differences between the years 56, 57, and 62, which could be the result of the adjacent year models' use of only two years of data per estimate. It could similarly have to do with the pooled version using data from all of the years which could effectively smooth away more volatility per year. I think the differences could be the result of either actual heterogeneity being picked up by the models, or some sort of misspecification due to the nature of the approaches taken. 
+### B. 
+I think the logic behind referring to this as a "chained" price index rests on the fact that each coefficient is effectively linked to the others forming a chain of sorts. With each year price change being calculated relative to the preceding year and the changes then being compounded over time, each period is clearly building on the last thus developing a chain of prices. For the final part of this question, I compare the hedonic to the chained price indeces. To start, I notice that the chained index is greater than 1 for several years while the hedonic index is not. The chained index also has a pretty dramatic drop off and then becomes increasingly close to 0 while the hedonic index decreases over time much more gradually. I think that since the chained index compounds on previous years, it can reflect volatility but also may be more prone to noise. The hedonic index on the other hand smoothes out extreme volatility over time showing a cleaner long run trend. For this reason I generally would prefer the the hedonic index. It generally feels more realistic, more interpretable, and is less volatile. I also think that in this case, the chained index may be heavily influenced by some of the beta values due to its extreme jumps and high values. This could imply that for these data, it is not the best way to understand time varying dynamics. 
+
 ```{r}
 # create lists to store results
 adjacent_betas <- numeric()
@@ -434,6 +437,22 @@ print(adjacent_betas)
 # now for the traditional hedonic approach on the 11 dummies and other variables
 hedonic_time_dummy <- lm(ln_rent ~ factor(year) + ln_mem + ln_mult + ln_access, data = chow_clean)
 summary(hedonic_time_dummy)
+
+# Now for part b I will calculate a hedonic price index
+hedonic_coeffs <- coef(hedonic_time_dummy)
+
+dummy_names <- paste0('factor(year)', 55:65)
+hedonic_index <- exp(c(0, hedonic_coeffs[dummy_names])) # prepend 0 for base year
+names(hedonic_index) <- 54:65
+print(hedonic_index)
+
+# Now I will construct a chained price index as the second half of the question
+years <- 54:65
+chained_log_sum <- c(0, cumsum(hedonic_coeffs))  
+chained_index <- exp(chained_log_sum)
+names(chained_index) <- years
+print(chained_index)
+
 ```
 
 
