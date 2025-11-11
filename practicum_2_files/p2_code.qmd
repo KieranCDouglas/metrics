@@ -2,13 +2,24 @@
 title: "Practicum 2"
 format:
   pdf:
-    code-block-font-size: 0.5em
+    fontsize: 12pt
+    geometry: margin=.5in
+    code-block-font-size: 0.4em
+    include-in-header: |
+      \usepackage{fvextra}
+      \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,breakanywhere,commandchars=\\\{\}}
+      \DefineVerbatimEnvironment{OutputCode}{Verbatim}{breaklines,breakanywhere,commandchars=\\\{\}}
 editor: visual
 author: "Kieran Douglas"
 ---
+
+
+
 # 2. Examining Waugh’s 1927 Asparagus Data
+
 ### A.
-We can see that the greatest difference between coeff estimates and those reported in the question are in the number of stalks and the variation in size (nostalks and disp). These end up being an absolute difference of 0.1767 and 0.0697 respecitvely. 
+
+We can see that the greatest difference between coeff estimates and those reported in the question are in the number of stalks and the variation in size (nostalks and disp). These end up being an absolute difference of 0.1767 and 0.0697 respecitvely.
 
 ```{r}
 # Set up environment and load data
@@ -40,30 +51,40 @@ coeffs = coefficients(model1)
 original_coeffs = c(green = 0.13826, nostalks = -1.53394, disp = -0.27554)
 differences <- coeffs[names(original_coeffs)] - original_coeffs
 print(differences)
-# We can see that the greatest difference between coeff estimates and those reported in the question are in the number of stalks and the variation in size (nostalks and disp). These end up being an absolute difference of 0.1767 and 0.0697 respecitvely. 
+# We can see that the greatest difference between coeff estimates and those reported 
+# in the question are in the number of stalks and the variation in size (nostalks and disp).
+# These end up being an absolute difference of 0.1767 and 0.0697 respecitvely. 
 ```
 
-### B. 
-It looks like the main issue here is that Waugh has transformed green color on the asparagus variable to inches rather than what I have in the raw data, being hundredths of inches. To fix this I need to rescale the variable green by dividing it by 100. After doing this the difference in means is no longer a problem. 
+### B.
+
+It looks like the main issue here is that Waugh has transformed green color on the asparagus variable to inches rather than what I have in the raw data, being hundredths of inches. To fix this I need to rescale the variable green by dividing it by 100. After doing this the difference in means is no longer a problem.
+
 ```{r}
-means <- c(price_avg = mean(waugh_clean$price), green_avg = mean(waugh_clean$green), nostalks_avg = mean(waugh_clean$nostalks), disp_avg = mean(waugh_clean$disp))
+means <- c(price_avg = mean(waugh_clean$price), green_avg = mean(waugh_clean$green), 
+nostalks_avg = mean(waugh_clean$nostalks), disp_avg = mean(waugh_clean$disp))
 print(means)
 means_reported <- c(price_avg = 90.095, green_avg = 5.8875, nostalks_avg = 19.555, disp_avg = 14.875)
 differences_avg <- means[names(means_reported)] - means_reported
 print(differences_avg)
-# It looks like the main issue here is that Waugh has transformed green color on the asparagus variable to inches rather than what I have in the raw data, being hundredths of inches. To fix this I need to rescale the variable green by dividing it by 100. 
+# It looks like the main issue here is that Waugh has transformed green color on the asparagus variable 
+# to inches rather than what I have in the raw data, being hundredths of inches. To fix this 
+# I need to rescale the variable green by dividing it by 100. 
 waugh_clean <- waugh_clean |> 
   mutate(
     green = green/100
   )
 # Recheck mean differences
-means_recheck <- c(price_avg = mean(waugh_clean$price), green_avg = mean(waugh_clean$green), nostalks_avg = mean(waugh_clean$nostalks), disp_avg = mean(waugh_clean$disp))
+means_recheck <- c(price_avg = mean(waugh_clean$price), green_avg = mean(waugh_clean$green), 
+nostalks_avg = mean(waugh_clean$nostalks), disp_avg = mean(waugh_clean$disp))
 print(means_recheck)
 
 ```
 
 ### C.
-I notice relative variance in the relative size of the covariances reported. For example, the covariance between price and green according to Waugh is ~3430 while the one I found was 3448 (larger). On the other hand, Waugh found a covairance of ~-154 for green and disp while I found one of ~-180 (mine was smaller). In other cases though mine was larger like with the cov between green and price. I think that the pattern in differences may relate to the way my price variable is coded relative to Waugh's. This would explain the constant differences in price covariance versus the more consistent findings in ohter categories. 
+
+I notice relative variance in the relative size of the covariances reported. For example, the covariance between price and green according to Waugh is \~3430 while the one I found was 3448 (larger). On the other hand, Waugh found a covairance of \~-154 for green and disp while I found one of \~-180 (mine was smaller). In other cases though mine was larger like with the cov between green and price. I think that the pattern in differences may relate to the way my price variable is coded relative to Waugh's. This would explain the constant differences in price covariance versus the more consistent findings in ohter categories.
+
 ```{r}
 # I am now going to create a variance covariance matrix similar to Waugh's`
 moments_subset <- waugh_clean[, c("price", "green", "nostalks", "disp")]
@@ -81,20 +102,31 @@ print(noquote(matrix_fmt))
 ```
 
 ### D.
-It is plausible that the principle findings concerning the effects of covariate variation could be affected in terms of the precision and statistical inference of coefficient estimates if there was underestimation or misreporting of variance and covariance among regressors. Depsite OLS estimates remaining unbiased under GM, Waugh's under or over-estiamted variance and coveriance could lead to underestiated standard errors and possibly inacurate significance. Similarly, cov among the regressors included may inflate the standard errors and lead to reductions in the validity/reliability of estimates. The difference in scaled coefficients between Waugh's and my own analysis do not differ too much, but there are some clear differences. For example, my estimate for the marginal effect of a unit increase in the number of stalks per bunch is about $0.5 less than Waugh's. I estimate a slightly higher increase in price given a unit increase in green, and a roughly $0.2 larger decrease in price given a unit increase in size variation. Overall, our estimates are very similar. I find the association between both green and nostalks with price to be highly statistically significant at the p<0.001 level and the association between disp and price to be statistically signifiacnt at **0.001<p<0.01** level. All of these observations are ceterus parabus. 
 
- ```{r}
-  # run model
+It is plausible that the principle findings concerning the effects of covariate variation could be affected in terms of the precision and statistical inference of coefficient estimates if there was underestimation or misreporting of variance and covariance among regressors. Depsite OLS estimates remaining unbiased under GM, Waugh's under or over-estiamted variance and coveriance could lead to underestiated standard errors and possibly inacurate significance. Similarly, cov among the regressors included may inflate the standard errors and lead to reductions in the validity/reliability of estimates. The difference in scaled coefficients between Waugh's and my own analysis do not differ too much, but there are some clear differences. For example, my estimate for the marginal effect of a unit increase in the number of stalks per bunch is about \$0.5 less than Waugh's. I estimate a slightly higher increase in price given a unit increase in green, and a roughly \$0.2 larger decrease in price given a unit increase in size variation. Overall, our estimates are very similar. I find the association between both green and nostalks with price to be highly statistically significant at the p\<0.001 level and the association between disp and price to be statistically signifiacnt at **0.001\<p\<0.01** level. All of these observations are ceterus parabus.
+
+```{r}
+ # run model
 coef(model1) * 2.782
 waugh_scaled <- original_coeffs*2.782
 print(waugh_scaled)
- 
-# The difference in scaled coefficients between Waugh's and my own analysis do not differ too much, but there are some clear differences. For example, my estimate for the marginal effect of a unit increase in the number of stalks per bunch is about $0.5 less than Waugh's. I estimate a slightly higher increase in price given a unit increase in green, and a roughly $0.2 larger decrease in price given a unit increase in size variation. Overall, our estimates are very similar. I find the association between both green and nostalks with price to be highly statistically significant at the p<0.001 level and the association between disp and price to be statistically signifiacnt at 0.001<p<0.01 level. All of these observations are ceterus parabus. 
- ```
 
-### E. 
-To solve this I am going to experiment with a matrix. 
-``` {r}
+# The difference in scaled coefficients between Waugh's and my own analysis do 
+# not differ too much, but there are some clear differences.
+# For example, my estimate for the marginal effect of a unit increase in the number
+# of stalks per bunch is about $0.5 less than Waugh's. I estimate a slightly higher 
+# increase in price given a unit increase in green, and a roughly $0.2 larger decrease
+# in price given a unit increase in size variation. Overall, our estimates are very similar. 
+# I find the association between both green and nostalks with price to be highly statistically 
+# significant at the p<0.001 level and the association between disp and price to be statistically 
+# signifiacnt at 0.001<p<0.01 level. All of these observations are ceterus parabus. 
+```
+
+### E.
+
+To solve this I am going to experiment with a matrix.
+
+```{r}
 # my matrix solutions
 # Extract covariance matrix of regressors (columns and rows 2 to 4)
 xx <- matrix[2:4, 2:4]
@@ -124,12 +156,21 @@ names(beta_raw) <- c("green", "nostalks", "disperse")
 # scale
 beta_final <- beta_raw * 2.782
 beta_final
-# Computing the least squares estimates from Waugh's VC matrix table, we can see that his estimates are fairly similar in absolute value to mine. The differences in findings may come down to several factors, including that perhaps due to the nature of OLS and our estimators being assumed to be BLUE, we have better linear unbiased estimators than Waugh was able to find. It is possible that he could have faced some rounding errors here and there that I did not, both in the calculation of his var-cov matrix and his coefficients. 
+# Computing the least squares estimates from Waugh's VC matrix table,
+# we can see that his estimates are fairly similar in absolute value to mine. 
+# The differences in findings may come down to several factors, including that 
+# perhaps due to the nature of OLS and our estimators being assumed to be BLUE, 
+# we have better linear unbiased estimators than Waugh was able to find. It is 
+# possible that he could have faced some rounding errors here and there that I 
+# did not, both in the calculation of his var-cov matrix and his coefficients. 
 ```
 
 # 3. Exploring Relationships among $R^2$, Coeﬃcients of Determination, and Correlation Coeﬃcients
+
 ### A.
-Based on the cor matrix, it is evident that the most highly correlated variables are price and green, price and nostalks, nostalks and disp, and price and disp (ordered from highest to lowest positive and negative correlation). The most orthogonal correlations are between green and nostalks and green and disp becasue each of their correlations is quite close to zero, thus implying low to no real linear relationship between the variables based on the data we have available. 
+
+Based on the cor matrix, it is evident that the most highly correlated variables are price and green, price and nostalks, nostalks and disp, and price and disp (ordered from highest to lowest positive and negative correlation). The most orthogonal correlations are between green and nostalks and green and disp becasue each of their correlations is quite close to zero, thus implying low to no real linear relationship between the variables based on the data we have available.
+
 ```{r}
 # create cor matrix
 order <- c("price", "green", "nostalks", "disp")
@@ -144,11 +185,15 @@ cor_matrix_char <- format(cor_matrix_rounded, nsmall = 5)
 cor_matrix_char[lower.tri(cor_matrix_char)] <- ""
 
 print(cor_matrix_char, quote = FALSE)
-# based on the cor matrix, it is evident that the most highly correlated variables are price and green, price and nostalks, nostalks and disp, and price and disp (ordered from highest to lowest positive and negative correlation). 
+# based on the cor matrix, it is evident that the most highly correlated variables 
+# are price and green, price and nostalks, nostalks and disp, and price and disp 
+# (ordered from highest to lowest positive and negative correlation). 
 ```
 
 ### B.
-Comparing the square roots calculated of the R^2 I can see that they are equal except for sign. This is because the correlation coefficient can be negative (between -1 and 1) but the coiefficient of determination will always be positive (between 0 and 1) since its the squared correlation coefficient. If I had run the reverse regressios the R^2 measures would be the same as those from the correct regressions because when dealing with the same two variables, the ammount of variation explained in one variable by the other will be constant since again, it is the squares correlation coefficient. Reversing their order has no impact on the ammount of variation explained that our R^2 captures. 
+
+Comparing the square roots calculated of the R\^2 I can see that they are equal except for sign. This is because the correlation coefficient can be negative (between -1 and 1) but the coiefficient of determination will always be positive (between 0 and 1) since its the squared correlation coefficient. If I had run the reverse regressios the R\^2 measures would be the same as those from the correct regressions because when dealing with the same two variables, the ammount of variation explained in one variable by the other will be constant since again, it is the squares correlation coefficient. Reversing their order has no impact on the ammount of variation explained that our R\^2 captures.
+
 ```{r}
 # price model
 pricegreenmodel <- lm(data = waugh_clean, price ~ green)
@@ -166,7 +211,9 @@ sqrt(0.1054)
 ```
 
 ### C.
-I expect that if I add the regressor nostalks to the regression, the R^2 will increase. This is because we have seperately confirmed that variation in nostalks explains some of the variation in price, so if we add it to the regression, the models explanatory power should increase. Given the correlation between green and nostalks in the table I would expect the change in R^2 when nostalks is added to the regression to be large. My intuition is such that since the two variables are not super correlated BUT are indidivually correlated with price, they should explain a significant ammount of the variation in price when both included as regressors. Running the regression confirms my intuition, as the R^2 is increased by nearly 15 points, representing a significant jump. Further, comparing the R^2 between the model that regressed price on green to the model that regressed price on green AND disp, we can see another increase in the R^2 equating to about 5 points. This represents an interesting jump, despite it being smaller in magnitude to the previous change in R^2. I think this is consistent with the sample correlation between green and disp, which is bigger than that between green and nostalks but still not so big as to fail in adding additional explanation to the model. Finally, when comparing the price on nostalks model to the price on nostalks AND disp model, we also observe a jump in R^2 that is about 4 points. This is again smaller than previous jumps and can probably be explained by the higher correlation coefficient between nostalks and disp that comes out to 0.35003, an R that would suggest higher correlation between the two explanatory variables and thus a smaller increase to the R^2 when both included in a model explaining price. This is consistent with the previous findings regarding the effect of adding correlated explanatory variables to a model. I think this is why would prioritize using adjusted R^2 since that measure penalizes for adding less relavent variables. 
+
+I expect that if I add the regressor nostalks to the regression, the R\^2 will increase. This is because we have seperately confirmed that variation in nostalks explains some of the variation in price, so if we add it to the regression, the models explanatory power should increase. Given the correlation between green and nostalks in the table I would expect the change in R\^2 when nostalks is added to the regression to be large. My intuition is such that since the two variables are not super correlated BUT are indidivually correlated with price, they should explain a significant ammount of the variation in price when both included as regressors. Running the regression confirms my intuition, as the R\^2 is increased by nearly 15 points, representing a significant jump. Further, comparing the R\^2 between the model that regressed price on green to the model that regressed price on green AND disp, we can see another increase in the R\^2 equating to about 5 points. This represents an interesting jump, despite it being smaller in magnitude to the previous change in R\^2. I think this is consistent with the sample correlation between green and disp, which is bigger than that between green and nostalks but still not so big as to fail in adding additional explanation to the model. Finally, when comparing the price on nostalks model to the price on nostalks AND disp model, we also observe a jump in R\^2 that is about 4 points. This is again smaller than previous jumps and can probably be explained by the higher correlation coefficient between nostalks and disp that comes out to 0.35003, an R that would suggest higher correlation between the two explanatory variables and thus a smaller increase to the R\^2 when both included in a model explaining price. This is consistent with the previous findings regarding the effect of adding correlated explanatory variables to a model. I think this is why would prioritize using adjusted R\^2 since that measure penalizes for adding less relavent variables.
+
 ```{r}
 green_nostalks_model <- lm(data = waugh_clean, price~green+nostalks)
 summary(green_nostalks_model)
@@ -182,7 +229,9 @@ summary(pricenostalksmodel)
 ```
 
 ### D.
-Here I notice the same trend, where the R^2 for the full regression is 0.7268 while the summed R^2 from the single regressions is 0.8307. I think this is because in this case, the model accounts for overlaps in explanatory power between the regressors that are not even a question in the single models. I think this is becasue the multiple regression avoids double counting, providing the joint effect on price. 
+
+Here I notice the same trend, where the R\^2 for the full regression is 0.7268 while the summed R\^2 from the single regressions is 0.8307. I think this is because in this case, the model accounts for overlaps in explanatory power between the regressors that are not even a question in the single models. I think this is becasue the multiple regression avoids double counting, providing the joint effect on price.
+
 ```{r}
 fullmodel <- lm(data = waugh_clean, price~nostalks+green+disp)
 summary(fullmodel)
@@ -192,8 +241,9 @@ summary(fullmodel)
 
 ```
 
-### E. 
-Waugh's interpretation of the coefficient of determination is incorrect. His method of adding up individual coeficients of determination is not the right way to do it, as we know the explanatory variables he is including are not orthogonal. Waugh should have first correctly calculated and second explained that the coefficient of determination is the portion of variance in price that is jointly explained by variance in the explanatory variables, and in the case of this model, it is equal to about 0.72 or 72%. 
+### E.
+
+Waugh's interpretation of the coefficient of determination is incorrect. His method of adding up individual coeficients of determination is not the right way to do it, as we know the explanatory variables he is including are not orthogonal. Waugh should have first correctly calculated and second explained that the coefficient of determination is the portion of variance in price that is jointly explained by variance in the explanatory variables, and in the case of this model, it is equal to about 0.72 or 72%.
 
 ```{r}
 # nostalks = 0.14554
@@ -205,7 +255,8 @@ Waugh's interpretation of the coefficient of determination is incorrect. His met
 ```
 
 ### F.
-Right off the bat I notice that the R^2 calculated are the same! I think this happened because by regressing price on a vector of fitted values that were fitted on a regression on price, I am effectively decomposing price to simply its predicted and residual parts. As for the intercept coefficient of 0 and the slope coefficient of 1, I think this is due to the fact that the vector of fitted values is a linear transformation of the original regressors, meaning that when I go onto regress price on that vector, the best linear fit for it would be a zero intercept and a 1 slope. This is because the fitted values generated are the closest possible linear predictors of the observed data. 
+
+Right off the bat I notice that the R\^2 calculated are the same! I think this happened because by regressing price on a vector of fitted values that were fitted on a regression on price, I am effectively decomposing price to simply its predicted and residual parts. As for the intercept coefficient of 0 and the slope coefficient of 1, I think this is due to the fact that the vector of fitted values is a linear transformation of the original regressors, meaning that when I go onto regress price on that vector, the best linear fit for it would be a zero intercept and a 1 slope. This is because the fitted values generated are the closest possible linear predictors of the observed data.
 
 ```{r}
 fullmodel <- lm(data = waugh_clean, price~nostalks+green+disp)
@@ -216,14 +267,14 @@ summary(fitmodel)
 ```
 
 # 4. Assessing the Stability of the Hedonic Price Equation for the First and Second-Generation Computers
-### A.
-### B.
-Chow's model: LN_RENT= β0 + β1LN_MEM + β2LN_MULT + β3LN_ACCESS + u
-My first f-test yielded the following statistics: Chow F-statistic: 0.5574, df = (20, 58), p-value = 0.9256
-My second f-test yielded the following statitstics: Chow F-statistic: 0.6243, df = (20, 31), p-value = 0.863723
 
-I also find associated p-values of 0.9256 and 0.8637 respectively. Based on these findings I fail to reject the null hypothesis, finding lack of evidence that the slopes differ. This is similar to Chow's findings.  
- 
+### A.
+
+### B.
+
+Chow's model: LN_RENT= β0 + β1LN_MEM + β2LN_MULT + β3LN_ACCESS + u My first f-test yielded the following statistics: Chow F-statistic: 0.5574, df = (20, 58), p-value = 0.9256 My second f-test yielded the following statitstics: Chow F-statistic: 0.6243, df = (20, 31), p-value = 0.863723
+
+I also find associated p-values of 0.9256 and 0.8637 respectively. Based on these findings I fail to reject the null hypothesis, finding lack of evidence that the slopes differ. This is similar to Chow's findings.
 
 ```{r}
 library("readxl")
@@ -353,7 +404,8 @@ cat(sprintf(
 ```
 
 ### C.
-I find a f statistic of 3.6926, with a corresponding p value of 0.01389. Since the p-value shows that the results are significant at a p<0.05 level, I reject the null hypothesis. I determine that there is statistically significant evidence that the relationship between ln(rent) and one of more of the explanatory variables used in the model changed between the generations of computers. This does not really surprise me, since I would expect technological value relationships to change over time as technology becomes more capable. I think this demonstrates that a single hedonic pricing framework fails to fit both generations correctly due to external dynamics shifting between generations. Next I relax the assumption of slope parameter equality within each generation and test the null hypothesis that slope parameters are equal over the entire 1954-1965 time span against the alternative hypothesis that these slope coeﬃcients varied from year to year. I find an f-statistic of 0.7328 and a corresponding p-value of 0.8721. This means that there is no significant evidence that the relationship between features and rent changes from year to year over the entire period, leading me to fail in rejecting the null hypothesis. These findings are consistent with those found earlier since it is plausible that the relationship could only change at the generational boundary while remaining constant withinm each generation. These results point towards a large shift but not indefinite instability between sub-periods. 
+
+I find a f statistic of 3.6926, with a corresponding p value of 0.01389. Since the p-value shows that the results are significant at a p\<0.05 level, I reject the null hypothesis. I determine that there is statistically significant evidence that the relationship between ln(rent) and one of more of the explanatory variables used in the model changed between the generations of computers. This does not really surprise me, since I would expect technological value relationships to change over time as technology becomes more capable. I think this demonstrates that a single hedonic pricing framework fails to fit both generations correctly due to external dynamics shifting between generations. Next I relax the assumption of slope parameter equality within each generation and test the null hypothesis that slope parameters are equal over the entire 1954-1965 time span against the alternative hypothesis that these slope coeﬃcients varied from year to year. I find an f-statistic of 0.7328 and a corresponding p-value of 0.8721. This means that there is no significant evidence that the relationship between features and rent changes from year to year over the entire period, leading me to fail in rejecting the null hypothesis. These findings are consistent with those found earlier since it is plausible that the relationship could only change at the generational boundary while remaining constant withinm each generation. These results point towards a large shift but not indefinite instability between sub-periods.
 
 ```{r}
 # full regression not filtering for year; restricted model
@@ -379,7 +431,9 @@ F_stat <- ((rss_restricted - rss_unrestricted) / numerator_df) / (rss_unrestrict
 p_value <- pf(F_stat, numerator_df, denominator_df, lower.tail = FALSE)
 cat(sprintf("Chow F-statistic: %.4f, df = (%d, %d), p-value = %.4g\n", F_stat, numerator_df, denominator_df, p_value))
 
-#Now I relax the assumption of slope parameter equality within each generation and test the null hypothesis that slope parameters are equal over the entire 1954-1965 time span against the alternative hypothesis that these slope coeﬃcients varied from year to year
+#Now I relax the assumption of slope parameter equality within each generation and test 
+# the null hypothesis that slope parameters are equal over the entire 1954-1965 time span against
+# the alternative hypothesis that these slope coeﬃcients varied from year to year
 # run the model
 pooled <- lm(ln_rent ~ factor(year) + ln_mem + ln_mult + ln_access, data = chow_clean) 
 RSS_pooled <- sum(resid(pooled)^2)
@@ -405,10 +459,10 @@ cat(sprintf("Chow F-statistic: %.4f, df = (%d, %d), p-value = %.4g\n", F_stat, n
 ```
 
 # 5. Using Time-Varying Hedonic Price Equations to Construct Chained Price Indexes for Computers
+
 ### A.
-In comparing the year-to-year changes in the estimated coeﬃcients of the 11 dummy variables with the levels of the βt estimates, I can see that the estimates are relatively close to each other between methods, with directionality consistently matching. I do see the potential for higher order interactions to exist that arent captured in the smaller adjacent year regressions. This could be due to slope inconsistency or potentially omitted interactions. I think it is appropriate to compare year-to-year changes in the estimated dummy variable coeﬃcients with levels of the estimated βt because both methods provide estimates of the annual adjusted price change. THey are both expected to be similar if the model is well specified and if the sample sizes are of reasonable size. I notice some more substantial differences between the years 56, 57, and 62, which could be the result of the adjacent year models' use of only two years of data per estimate. It could similarly have to do with the pooled version using data from all of the years which could effectively smooth away more volatility per year. I think the differences could be the result of either actual heterogeneity being picked up by the models, or some sort of misspecification due to the nature of the approaches taken. 
-### B. 
-I think the logic behind referring to this as a "chained" price index rests on the fact that each coefficient is effectively linked to the others forming a chain of sorts. With each year price change being calculated relative to the preceding year and the changes then being compounded over time, each period is clearly building on the last thus developing a chain of prices. For the final part of this question, I compare the hedonic to the chained price indeces. To start, I notice that the chained index is greater than 1 for several years while the hedonic index is not. The chained index also has a pretty dramatic drop off and then becomes increasingly close to 0 while the hedonic index decreases over time much more gradually. I think that since the chained index compounds on previous years, it can reflect volatility but also may be more prone to noise. The hedonic index on the other hand smoothes out extreme volatility over time showing a cleaner long run trend. For this reason I generally would prefer the the hedonic index. It generally feels more realistic, more interpretable, and is less volatile. I also think that in this case, the chained index may be heavily influenced by some of the beta values due to its extreme jumps and high values. This could imply that for these data, it is not the best way to understand time varying dynamics. 
+
+In comparing the year-to-year changes in the estimated coeﬃcients of the 11 dummy variables with the levels of the βt estimates, I can see that the estimates are relatively close to each other between methods, with directionality consistently matching. I do see the potential for higher order interactions to exist that arent captured in the smaller adjacent year regressions. This could be due to slope inconsistency or potentially omitted interactions. I think it is appropriate to compare year-to-year changes in the estimated dummy variable coeﬃcients with levels of the estimated βt because both methods provide estimates of the annual adjusted price change. THey are both expected to be similar if the model is well specified and if the sample sizes are of reasonable size. I notice some more substantial differences between the years 56, 57, and 62, which could be the result of the adjacent year models' use of only two years of data per estimate. It could similarly have to do with the pooled version using data from all of the years which could effectively smooth away more volatility per year. I think the differences could be the result of either actual heterogeneity being picked up by the models, or some sort of misspecification due to the nature of the approaches taken. \### B. I think the logic behind referring to this as a "chained" price index rests on the fact that each coefficient is effectively linked to the others forming a chain of sorts. With each year price change being calculated relative to the preceding year and the changes then being compounded over time, each period is clearly building on the last thus developing a chain of prices. For the final part of this question, I compare the hedonic to the chained price indeces. To start, I notice that the chained index is greater than 1 for several years while the hedonic index is not. The chained index also has a pretty dramatic drop off and then becomes increasingly close to 0 while the hedonic index decreases over time much more gradually. I think that since the chained index compounds on previous years, it can reflect volatility but also may be more prone to noise. The hedonic index on the other hand smoothes out extreme volatility over time showing a cleaner long run trend. For this reason I generally would prefer the the hedonic index. It generally feels more realistic, more interpretable, and is less volatile. I also think that in this case, the chained index may be heavily influenced by some of the beta values due to its extreme jumps and high values. This could imply that for these data, it is not the best way to understand time varying dynamics.
 
 ```{r}
 # create lists to store results
@@ -454,7 +508,3 @@ names(chained_index) <- years
 print(chained_index)
 
 ```
-
-
-
-
