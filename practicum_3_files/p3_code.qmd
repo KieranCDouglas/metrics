@@ -88,3 +88,32 @@ cor(clean$LNKWH, clean$resid)
 # 3. Assessing Alternative Returns-to-Scale Specifications
 ## A. 
 
+```{r}
+# generate subsamples of data for each set of 29 rows
+ss1 <- clean |> 
+    filter(
+        ORDER <200
+    )
+ss2 <- clean |> 
+    filter(
+        ORDER > 200,
+        ORDER < 300
+    )
+ss3 <- clean |> 
+    filter(
+        ORDER > 300
+        ORDER < 400
+    )
+ss4 <- clean |> 
+    filter(
+        ORDER >400
+        ORDER <500
+    )
+ss5 <- clean |> 
+    filter(
+        ORDER > 500
+    )
+
+```
+
+
