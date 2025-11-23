@@ -51,11 +51,40 @@ summary(model1)
 ```
 
 ## C.
-I will now construct a confidence interval for $beta_y$. This ends up being ($0.6751603 0.7662147$), which means that using the same procedure on repeated samples, we would expect 99% of intervals to contain the true population coefficient. Based on this, we could determine that at the 99% confidence interval, the null hypothesis that $beta_y=1$ is rejected, meaning that with a high degree of certainty we could say that values of 1 are not expected as the true population coefficient under this model. 
+I will now construct a confidence interval for $beta_y$. This ends up being ($0.6751603 0.7662147$), which means that using the same procedure on repeated samples, we would expect 99% of intervals to contain the true population coefficient. Based on this, we could determine that at the 99% confidence interval, the null hypothesis that $beta_y=1$ is rejected, meaning that with a high degree of certainty we could say that values of 1 are not expected as the true population coefficient under this model. This implies that we would reject the null hypothesis that returns to scale were constant, because we can say with a high degree of certainty that they will be increasing since our confidence interval shows that we would expect 99% of intervals (0.68, 0.77) to contain the true population coefficient. If the interval contained 1 we may say that it is plausible for the model to display constant returns to scale, but since it is <1, we can say with a reasonable degree of confidence that in most all cases a 1% increase in the output will raise cost by less than 1% which implies increasing returns to scale. Computing the point estimate for returns to scale, I find an r of 1.388. Since this is greater than 1, we again confirm observation of increasing returns to scale. This means that if we werer to double inputs, outputs would more than double! Since returns to scale are increasing, in this case we have positive economies of scale. This means that as output increases, cost increases at a decreasing rate, or avarage cost falls. 
 
 ```{r}
 # Construct a 99% confidence interval using the estimated model for the coefficient on LNKWH ($beta_y$)
 confint(model1, "LNKWH", level = 0.99)
 
+# compute the point estimate of returns to scale r, where r=1/b_y. It is 1.388
+1/0.720688
 ```
+
+## D.
+To calculate the implies estimate of $alpha_2$ from part C, I have to multiply the coefficient $beta_2$ by the point estimate for returns to scale, r. This yields $-0.007381*1.388=-0.01024$. This estimate is very close to 0, which makes me think that Nerlove was dissatisfied with his estimate of $alpha_2$ since it would imply that the second input (capital) was either not effective or negatively productive which wouldnt really make sense for a necessary input. Additionally, since the estimate is so close to 0, it seems likely hat a confidence interval would contain 0 deeming it non statistically significant which also wouldnt make sense. This finding contradicts what we would expect of Cobb-Douglas, indicating that something weird might be going on with the data we have that is causing it to inaccurately reflect the true production process.   
+
+## E.
+I also find a U-shaped pattern when plotting residuals against LNKWH. I think that this could be a sign of model mispsecification, where the model we are estimating does not adequetly capture the underlying relationship in the data. The implication here is that the true relationship between output and cost is likely nonlinear in some way, and our linearity asusmption is failing. Next, calculating the correlation between the residuals and LNKWH I find a coefficient of effectively 0 (-9.565708e-17). This is not surprising as OLS ensures that residuals are not correlated with regressors in the model by optimizing the fit such that linear association between residuals and regressors is removed. This however is not indicitive of a perfect model, and provides a good example of why its important to check things graphically to ensure that we are getting what we expected. 
+```{r}
+# create a new row with residuals from the model
+clean <- clean |> 
+    mutate(
+        resid = residuals(model1)
+    )
+
+# plot against log of output
+ggplot(data = clean, mapping = aes(y = resid, x = LNKWH)) +
+    geom_point() +
+    geom_smooth(method = loess) +
+    theme_minimal() +
+    labs(title = "Residuals Plotted Against Log of Output", x = "LNKWH", y = "Residuals")
+
+# compute sample correlation of residuals with LNKWH across the sample 
+cor(clean$LNKWH, clean$resid)
+
+```
+
+# 3. Assessing Alternative Returns-to-Scale Specifications
+## A. 
 
