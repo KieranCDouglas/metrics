@@ -1,0 +1,61 @@
+---
+title: "Practicum 3"
+format: pdf
+author: Kieran Douglas
+date: 12-02-2025
+---
+
+# 2. Replicating Nerlove's Classic Results on Scale Economies
+
+## A.
+
+The purpose of this assignment is to replicate some of the principles of returns-to-scale reported by Nerlove in his 1955 article. His estimated equation was as follows:
+
+$lnC^* = \beta_o + \beta_{y}ln(y)+\beta_1lnp^*_1+\beta_2lnp^*_2$
+
+For part A I will generate the variables necesary for estimating his parameters. includes $lnCP 3 = ln(COSTS/PF), lnP13 = ln(PL/PF), lnP23=ln(PK/PF), lnKWH=ln(KWH)$
+
+I will do this using the mutate function in Tidyverse. 
+```{r}
+# Load packages and data from the NERLOV file 
+library(tidyverse) 
+library(readxl)
+
+nerlov <- read_excel("/Users/kieran/Documents/MASTERS/METRICS/code/metrics/practicum_3_files/nerlov.xlsx")
+
+# Clean data and generate new variables per assignment request
+
+clean <- nerlov |> 
+    mutate(
+        LNCP3 = log(COSTS/PF), 
+        LNP13 = log(PL/PF),
+        LNP23 = log(PK/PF), 
+        LNKWH = log(KWH)
+        )
+
+# Preview order of LNKWH
+
+print(clean$LNKWH) 
+# The observations are by size of output, looks good!
+```
+
+## B.
+Now that I have all of the data in line, I will estimate the following model:
+
+$lnC^* = \beta_o + \beta_{y}ln(y)+\beta_1lnp^*_1+\beta_2lnp^*_2$
+ 
+Running this model I find coefficient estimates that slightly differ from those found by Nerlove, with $beta_y$, $beta_1$ and $beta_2$ estimates coming in at $0.7207$, $0.5929$, and $-0.0074$, respectively, with standard errors reporting as $0.0174$, $0.2046$, and $0.1907$. 
+```{r}
+model1 <- lm(data = clean, LNCP3~LNKWH+LNP13+LNP23)
+summary(model1)
+```
+
+## C.
+I will now construct a confidence interval for $beta_y$. This ends up being ($0.6751603 0.7662147$), which means that using the same procedure on repeated samples, we would expect 99% of intervals to contain the true population coefficient. Based on this, we could determine that at the 99% confidence interval, the null hypothesis that $beta_y=1$ is rejected, meaning that with a high degree of certainty we could say that values of 1 are not expected as the true population coefficient under this model. 
+
+```{r}
+# Construct a 99% confidence interval using the estimated model for the coefficient on LNKWH ($beta_y$)
+confint(model1, "LNKWH", level = 0.99)
+
+```
+
