@@ -87,7 +87,7 @@ cor(clean$LNKWH, clean$resid)
 
 # 3. Assessing Alternative Returns-to-Scale Specifications
 ## A. 
-
+My attempted replication of Nerlove's results was actually far closer than I was expecting. Both the estimates and the standard errors were within a very small distance of each other, and any spread appeared to be relatively unsystematic, varying from being greater than or less than with within and between subsets. I would estimate that any observed discrepencies are probably due to the fact that I used natural logarithms in my transformations while in the reported data from Nerlove common logarithms were used. 
 ```{r}
 # generate subsamples of data for each set of 29 rows
 ss1 <- clean |> 
@@ -101,19 +101,54 @@ ss2 <- clean |>
     )
 ss3 <- clean |> 
     filter(
-        ORDER > 300
+        ORDER > 300,
         ORDER < 400
     )
 ss4 <- clean |> 
     filter(
-        ORDER >400
+        ORDER >400,
         ORDER <500
     )
 ss5 <- clean |> 
     filter(
         ORDER > 500
     )
+# now I will estimate a model for each of these subsets and extract the coefficients to combine in a table
+library(broom)
+
+ss1_model <- lm(data = ss1, LNCP3~LNKWH+LNP13+LNP23)
+ss2_model <- lm(data = ss2, LNCP3~LNKWH+LNP13+LNP23)
+ss3_model <- lm(data = ss3, LNCP3~LNKWH+LNP13+LNP23)
+ss4_model <- lm(data = ss4, LNCP3~LNKWH+LNP13+LNP23)
+ss5_model <- lm(data = ss5, LNCP3~LNKWH+LNP13+LNP23)
+
+# create a conbined coefficients vector to use in table
+coef_combined <- list(ss1_model, ss2_model, ss3_model, ss4_model, ss5_model)
+# create and print tables for each subset
+coef_tbl <- lapply(seq_along(coef_combined), function(i) {
+  tidy(coef_combined[[i]]) %>%
+    mutate(coef_combined = paste0("model", i))
+})
+combined <- bind_rows(coef_tbl)
+print(coef_tbl)
+```
+
+## B.
+Using the subset models I ran in the previous section, I compute point estimates of returns to scale (r=1/b_y) for each of the five subsamples. For subsets 1-5 I find point estimates of returns to scale of 2.500, 1.519, 1.066, 1.096, and 0.961 respectively. These point estimates suggest that as output increases, cost generally decreases suggesting on average positive returns to scale. There are discrepensies that I observe though, as the magnitude at which the returns to scale are increasing are decreasing as output increases. Additionally, in the final subset, we see a switch to what may be either slightly decreasing or constant returns to scale. This indicates that at larger quantities bottlenecks or constraints may be experienced that limit continued gains. I think this suggests an alternative specification that is perhaps broken up by quantity and interpreted in terms of the subsections rather than their aggregate. The implications are that returns to scale may not be consistent in this case (or any really), reflecting the U-shaped residuals plot we observed in the previous section. 
+
+```{r}
+# subsample 1
+1/0.4
+#subsample 2
+1/0.658
+# subsample 3
+1/0.938
+# subsample 4
+1/0.912
+#subsample 5
+1/1.04
 
 ```
+
 
 
