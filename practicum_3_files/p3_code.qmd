@@ -191,10 +191,23 @@ Using the model I estimated in the previous section, I will now use the point es
 ```
 
 ## E. 
-
+I will now compute an F-Test to determine whether the constrained model used in part A. fits the data better or worse than the unconstrained model used in part C. Here, my null hypothesis $H_0$ is that the constraints in part A. create a model that sufficiently explains how cost responds to quantity, while my alternative hypothesis $H_1$ is that the relaxed model specified in part C. better fits the data in explaining how cost responds to quantity. The F-test in the case of restricted versus unrestricted models comes in the form of $((SSR_{restricted}-SSR_{unrestricted})/q)/(SSR_{unrestricted}/(n-k_{unrestricted})$ where n is the number of observations and k is the number of parameters in the unrestricted model. I will compute this using an ANOVA test in R. From the test, we see that the hypothesis that allowing each group to have its own intercept significantly improves the model fit, rejecting the null. The significantly smaller SSR found in the unrestricted model and the F-stat and its corresponding p-value being VERY close to zero gives my confidence that the unrestircted model does a better job at explaining the sample data. The findings suggest and support the idea that each different group has different intercepts and output elasticities meaning that the effect of output on cost varies by group significantly.
 ```{r}
-
+# run anova between restricted and unrestricted models
+anova(model1, model2)
 ```
+
+## F. 
+
+
+ln C∗
+= β0 + βy × lny + βyy × (lny)2 + β1 × lnp∗
+1 + β2 × lnp∗
+```{r}
+model3 <- lm(LNCP3 ~ LNKWH + I(LNKWH^2) + LNP13 + LNP23, data = clean)
+summary(model3)
+```
+
 
 
 
