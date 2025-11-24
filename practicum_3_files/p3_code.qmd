@@ -198,11 +198,6 @@ anova(model1, model2)
 ```
 
 ## F. 
-
-
-ln C∗
-= β0 + βy × lny + βyy × (lny)2 + β1 × lnp∗
-1 + β2 × lnp∗
 ```{r}
 model3 <- lm(LNCP3 ~ LNKWH + I(LNKWH^2) + LNP13 + LNP23, data = clean)
 summary(model3)
