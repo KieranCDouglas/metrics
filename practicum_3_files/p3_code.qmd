@@ -150,5 +150,15 @@ Using the subset models I ran in the previous section, I compute point estimates
 
 ```
 
+## C.
+I think that since the $beta_y$ coefficients vary pretty substantially across groups but the $beta_1 and beta_2$ coefficients do not as much. Basically, the output causes pretty different cost responses but the responsiveness to different input prices remains relatively stable. Given this, I think that by allowing intercept terms and $beta_y$ coefficients to vary while holding the others constant across groups. This should allow for us to better control for the observed heteogeneity, generating a model that is a better specification of our sample given its observed shape in earlier parts. 
+
+```{r}
+# I am going to start by creating dummy variables representing each group, followed by variables that multiply that dummy by LNKWH to act as propper interaction terms and finally rerun the regression including our new variables. 
+
+
+
+```
+
 
 
