@@ -151,12 +151,48 @@ Using the subset models I ran in the previous section, I compute point estimates
 ```
 
 ## C.
-I think that since the $beta_y$ coefficients vary pretty substantially across groups but the $beta_1 and beta_2$ coefficients do not as much. Basically, the output causes pretty different cost responses but the responsiveness to different input prices remains relatively stable. Given this, I think that by allowing intercept terms and $beta_y$ coefficients to vary while holding the others constant across groups. This should allow for us to better control for the observed heteogeneity, generating a model that is a better specification of our sample given its observed shape in earlier parts. 
+I think that since the $beta_y$ coefficients vary pretty substantially across groups but the $beta_1 and beta_2$ coefficients do not as much. Basically, the output causes pretty different cost responses but the responsiveness to different input prices remains relatively stable. Given this, I think that by allowing intercept terms and $beta_y$ coefficients to vary while holding the others constant across groups. This should allow for us to better control for the observed heteogeneity, generating a model that is a better specification of our sample given its observed shape in earlier parts. After replicating Nerlove's model by including all of the dummies and their interactions with $beta_y$ I was able to achieve almost a perfect copy of his estimates. Comparing mine to Nerlove's, the ones that are the most different are out estimated coefficients on the interaction between the second dummy (those between 200 and 300) in which he estimated 0.651 while I estimated 0.648, and our $R^2$ which he estimated as 0.95 while I found it to be 0.96. As you can see, these are VERY close to one another and any differences probably have to do again with the fact that I used natural logarithms in transformation while Nerlove used common logarithms. I believe that this also explains why all of my standard errors are slightly smaller than those reported by Nerlove.
 
 ```{r}
 # I am going to start by creating dummy variables representing each group, followed by variables that multiply that dummy by LNKWH to act as propper interaction terms and finally rerun the regression including our new variables. 
+# the dummies are called d1-d5
+clean <- clean |> 
+    mutate(
+        d1 = ORDER <200,
+        d2 = ORDER>=200 & ORDER<300,
+        d3 = ORDER>=300 & ORDER<400,
+        d4 = ORDER>=400 & ORDER<500,
+        d5 = ORDER>=500,
+        d1_LNKWH = d1*LNKWH,
+        d2_LNKWH = d2*LNKWH,
+        d3_LNKWH = d3*LNKWH,
+        d4_LNKWH = d4*LNKWH,
+        d5_LNKWH = d5*LNKWH
+    )
+# rerun the model including teh dummy variables
+model2 <- lm(data = clean, LNCP3~d1+d2+d3+d4+d5+d1_LNKWH+d2_LNKWH+d3_LNKWH+d4_LNKWH+d5_LNKWH+LNP13+LNP23)
+summary(model2)
 
+```
 
+## D.
+Using the model I estimated in the previous section, I will now use the point estimate returns to scale formula from part B. to compute the implied estimate of returns to scale for each of the five subsamples. From subsamples 1-5 I find point estimate returns to scale of 2.52, 1.54, 1.13, 1.10, and 0.94 respectively. Similar to my findings in part B. we observe increasing returns to scale that decrease with each subsequent output increase. THis trend continues until we reach subsample 5 which exhibits decreasing (perhaps constand) returns to scale, which seems to be a common trend as output scales up due to physical constraints. Basicallu, my estimated scale economies are quite strong when output is very small, but as output grows the benefits diminish. Once we weach the highest reported output point we even notice constand or decreasing average cost per unit meanign that further growth is no longer bringing an advantage as it once did.  
+```{r}
+# subsample 1
+1/0.39688
+#subsample 2
+1/0.64816
+# subsample 3
+1/0.88479
+# subsample 4
+1/0.90874
+#subsample 5
+1/1.06274
+```
+
+## E. 
+
+```{r}
 
 ```
 
