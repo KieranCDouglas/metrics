@@ -44,25 +44,27 @@ Now that I have all of the data in line, I will estimate the following model:
 
 $lnC^* = \beta_o + \beta_{y}ln(y)+\beta_1lnp^*_1+\beta_2lnp^*_2$
  
-Running this model I find coefficient estimates that slightly differ from those found by Nerlove, with $beta_y$, $beta_1$ and $beta_2$ estimates coming in at $0.7207$, $0.5929$, and $-0.0074$, respectively, with standard errors reporting as $0.0174$, $0.2046$, and $0.1907$. 
+Running this model I find coefficient estimates that slightly differ from those found by Nerlove, with $\beta_y$, $\beta_1$ and $\beta_2$ estimates coming in at $0.7207$, $0.5929$, and $-0.0074$, respectively, with standard errors reporting as $0.0174$, $0.2046$, and $0.1907$. 
 ```{r}
 model1 <- lm(data = clean, LNCP3~LNKWH+LNP13+LNP23)
 summary(model1)
 ```
 
 ## C.
-I will now construct a confidence interval for $beta_y$. This ends up being ($0.6751603 0.7662147$), which means that using the same procedure on repeated samples, we would expect 99% of intervals to contain the true population coefficient. Based on this, we could determine that at the 99% confidence interval, the null hypothesis that $beta_y=1$ is rejected, meaning that with a high degree of certainty we could say that values of 1 are not expected as the true population coefficient under this model. This implies that we would reject the null hypothesis that returns to scale were constant, because we can say with a high degree of certainty that they will be increasing since our confidence interval shows that we would expect 99% of intervals (0.68, 0.77) to contain the true population coefficient. If the interval contained 1 we may say that it is plausible for the model to display constant returns to scale, but since it is <1, we can say with a reasonable degree of confidence that in most all cases a 1% increase in the output will raise cost by less than 1% which implies increasing returns to scale. Computing the point estimate for returns to scale, I find an r of 1.388. Since this is greater than 1, we again confirm observation of increasing returns to scale. This means that if we werer to double inputs, outputs would more than double! Since returns to scale are increasing, in this case we have positive economies of scale. This means that as output increases, cost increases at a decreasing rate, or avarage cost falls. 
+I will now construct a confidence interval for $\beta_y$. This ends up being ($0.6751603 0.7662147$), which means that using the same procedure on repeated samples, we would expect 99% of intervals to contain the true population coefficient. Based on this, we could determine that at the 99% confidence interval, the null hypothesis that $\beta_y=1$ is rejected, meaning that with a high degree of certainty we could say that values of 1 are not expected as the true population coefficient under this model. This implies that we would reject the null hypothesis that returns to scale were constant, because we can say with a high degree of certainty that they will be increasing since our confidence interval shows that we would expect 99% of intervals (0.68, 0.77) to contain the true population coefficient. If the interval contained 1 we may say that it is plausible for the model to display constant returns to scale, but since it is <1, we can say with a reasonable degree of confidence that in most all cases a 1% increase in the output will raise cost by less than 1% which implies increasing returns to scale. Computing the point estimate for returns to scale, I find an r of 1.388. Since this is greater than 1, we again confirm observation of increasing returns to scale. This means that if we werer to double inputs, outputs would more than double! Since returns to scale are increasing, in this case we have positive economies of scale. This means that as output increases, cost increases at a decreasing rate, or avarage cost falls. 
 
 ```{r}
-# Construct a 99% confidence interval using the estimated model for the coefficient on LNKWH ($beta_y$)
+# Construct a 99% confidence interval using the estimated model
+# for the coefficient on LNKWH ($beta_y$)
 confint(model1, "LNKWH", level = 0.99)
 
-# compute the point estimate of returns to scale r, where r=1/b_y. It is 1.388
+# compute the point estimate of returns to scale r, 
+# where r=1/b_y. It is 1.388
 1/0.720688
 ```
 
 ## D.
-To calculate the implies estimate of $alpha_2$ from part C, I have to multiply the coefficient $beta_2$ by the point estimate for returns to scale, r. This yields $-0.007381*1.388=-0.01024$. This estimate is very close to 0, which makes me think that Nerlove was dissatisfied with his estimate of $alpha_2$ since it would imply that the second input (capital) was either not effective or negatively productive which wouldnt really make sense for a necessary input. Additionally, since the estimate is so close to 0, it seems likely hat a confidence interval would contain 0 deeming it non statistically significant which also wouldnt make sense. This finding contradicts what we would expect of Cobb-Douglas, indicating that something weird might be going on with the data we have that is causing it to inaccurately reflect the true production process.   
+To calculate the implies estimate of $\alpha_2$ from part C, I have to multiply the coefficient $\beta_2$ by the point estimate for returns to scale, r. This yields $-0.007381*1.388=-0.01024$. This estimate is very close to 0, which makes me think that Nerlove was dissatisfied with his estimate of $\alpha_2$ since it would imply that the second input (capital) was either not effective or negatively productive which wouldnt really make sense for a necessary input. Additionally, since the estimate is so close to 0, it seems likely hat a confidence interval would contain 0 deeming it non statistically significant which also wouldnt make sense. This finding contradicts what we would expect of Cobb-Douglas, indicating that something weird might be going on with the data we have that is causing it to inaccurately reflect the true production process.   
 
 ## E.
 I also find a U-shaped pattern when plotting residuals against LNKWH. I think that this could be a sign of model mispsecification, where the model we are estimating does not adequetly capture the underlying relationship in the data. The implication here is that the true relationship between output and cost is likely nonlinear in some way, and our linearity asusmption is failing. Next, calculating the correlation between the residuals and LNKWH I find a coefficient of effectively 0 (-9.565708e-17). This is not surprising as OLS ensures that residuals are not correlated with regressors in the model by optimizing the fit such that linear association between residuals and regressors is removed. This however is not indicitive of a perfect model, and provides a good example of why its important to check things graphically to ensure that we are getting what we expected. 
@@ -113,7 +115,8 @@ ss5 <- clean |>
     filter(
         ORDER > 500
     )
-# now I will estimate a model for each of these subsets and extract the coefficients to combine in a table
+# now I will estimate a model for each of these subsets
+# and extract the coefficients to combine in a table
 library(broom)
 
 ss1_model <- lm(data = ss1, LNCP3~LNKWH+LNP13+LNP23)
@@ -151,10 +154,13 @@ Using the subset models I ran in the previous section, I compute point estimates
 ```
 
 ## C.
-I think that since the $beta_y$ coefficients vary pretty substantially across groups but the $beta_1 and beta_2$ coefficients do not as much. Basically, the output causes pretty different cost responses but the responsiveness to different input prices remains relatively stable. Given this, I think that by allowing intercept terms and $beta_y$ coefficients to vary while holding the others constant across groups. This should allow for us to better control for the observed heteogeneity, generating a model that is a better specification of our sample given its observed shape in earlier parts. After replicating Nerlove's model by including all of the dummies and their interactions with $beta_y$ I was able to achieve almost a perfect copy of his estimates. Comparing mine to Nerlove's, the ones that are the most different are out estimated coefficients on the interaction between the second dummy (those between 200 and 300) in which he estimated 0.651 while I estimated 0.648, and our $R^2$ which he estimated as 0.95 while I found it to be 0.96. As you can see, these are VERY close to one another and any differences probably have to do again with the fact that I used natural logarithms in transformation while Nerlove used common logarithms. I believe that this also explains why all of my standard errors are slightly smaller than those reported by Nerlove.
+I think that since the $\beta_y$ coefficients vary pretty substantially across groups but the $\beta_1 and \beta_2$ coefficients do not as much. Basically, the output causes pretty different cost responses but the responsiveness to different input prices remains relatively stable. Given this, I think that by allowing intercept terms and $\beta_y$ coefficients to vary while holding the others constant across groups. This should allow for us to better control for the observed heteogeneity, generating a model that is a better specification of our sample given its observed shape in earlier parts. After replicating Nerlove's model by including all of the dummies and their interactions with $\beta_y$ I was able to achieve almost a perfect copy of his estimates. Comparing mine to Nerlove's, the ones that are the most different are out estimated coefficients on the interaction between the second dummy (those between 200 and 300) in which he estimated 0.651 while I estimated 0.648, and our $R^2$ which he estimated as 0.95 while I found it to be 0.96. As you can see, these are VERY close to one another and any differences probably have to do again with the fact that I used natural logarithms in transformation while Nerlove used common logarithms. I believe that this also explains why all of my standard errors are slightly smaller than those reported by Nerlove.
 
 ```{r}
-# I am going to start by creating dummy variables representing each group, followed by variables that multiply that dummy by LNKWH to act as propper interaction terms and finally rerun the regression including our new variables. 
+# I am going to start by creating dummy variables representing each group, 
+# followed by variables that multiply that dummy by LNKWH to act
+# as propper interaction terms and finally rerun the regression
+# including our new variables. 
 # the dummies are called d1-d5
 clean <- clean |> 
     mutate(
@@ -176,7 +182,7 @@ summary(model2)
 ```
 
 ## D.
-Using the model I estimated in the previous section, I will now use the point estimate returns to scale formula from part B. to compute the implied estimate of returns to scale for each of the five subsamples. From subsamples 1-5 I find point estimate returns to scale of 2.52, 1.54, 1.13, 1.10, and 0.94 respectively. Similar to my findings in part B. we observe increasing returns to scale that decrease with each subsequent output increase. THis trend continues until we reach subsample 5 which exhibits decreasing (perhaps constand) returns to scale, which seems to be a common trend as output scales up due to physical constraints. Basicallu, my estimated scale economies are quite strong when output is very small, but as output grows the benefits diminish. Once we weach the highest reported output point we even notice constand or decreasing average cost per unit meanign that further growth is no longer bringing an advantage as it once did.  
+Using the model I estimated in the previous section, I will now use the point estimate returns to scale formula from part B. to compute the implied estimate of returns to scale for each of the five subsamples. From subsamples 1-5 I find point estimate returns to scale of 2.52, 1.54, 1.13, 1.10, and 0.94 respectively. Similar to my findings in part B. we observe increasing returns to scale that decrease with each subsequent output increase. This trend continues until we reach subsample 5 which exhibits decreasing (perhaps constant) returns to scale, which seems to be a common trend as output scales up due to physical constraints. Basically, my estimated scale economies are quite strong when output is very small, but as output grows the benefits diminish. Once we weach the highest reported output point we even notice constand or decreasing average cost per unit meaning that further growth is no longer bringing an advantage as it once did.  
 ```{r}
 # subsample 1
 1/0.39688
@@ -198,11 +204,144 @@ anova(model1, model2)
 ```
 
 ## F. 
+Running this model gives me estimates that are also quite similar to those of Nerlove. The small differences that exist are likely due to the difference in logs used as noted in previous sections. Similarly, my $R^2$ is pretty spot on, less than 0.01 away from Nerlove's. Next, I conduct a joint hypothesis test to determine whether returns to scale are constant using a 95%  confidence interval. My first null hypothesis holds that returns to scale are nonconstant, that is $\beta_y/=1 and \beta_{yy}/=0$, while my other null hypothesis holds that returns to scale are constant, or $\beta_y=1 and \beta_{yy}=0$. The joint null hypothesis test yields a massive F-statistic of 252.47 and a p-value that is far below our threshold, meaning we can strongly reject the null hypothesis of constant returns to scale. I think that here the joint hypothesis test gives me a statistical test with greater validity since it evaluates the combined effects of relaxing both restrictions at once which is useful here since the parameters are correlated. The individual t-tests evaluate each parameter seperately which could ignore estimate covariance and lead to inacurate findings. Finally, since the returns to scale in the expanded model vary with the level of output, I compute the implied range of returns to scale estimates using the meadian value of LNY in each of the subsamples. Conputing the r values I find an implied returns of scale for subsets 1-5 of 1.8778161, 1.3498233, 1.1616076, 1.0738059, and 0.9724344 respectively. This reflects earlier findings, though at a slightly lower magnitude towards the higher end, of positive returns to scale diminishing as quantity increases up to the point where it is slightly below constant returns to scale suggesting that further growth in output is no longer bringing the same gains it once did at lower quantities. 
 ```{r}
+# run model3 with the new term
 model3 <- lm(LNCP3 ~ LNKWH + I(LNKWH^2) + LNP13 + LNP23, data = clean)
 summary(model3)
+# run a joint null hypothesis test
+library(car)
+linearHypothesis(model3, c("LNKWH = 1", "I(LNKWH^2) = 0"))
+
+# calculate values of returns to scale for all 5 subsamples
+# to start I find meadian for LNY for each subsample
+medians <- c(
+  median(ss1$LNKWH, na.rm = TRUE),
+  median(ss2$LNKWH, na.rm = TRUE),
+  median(ss3$LNKWH, na.rm = TRUE),
+  median(ss4$LNKWH, na.rm = TRUE),
+  median(ss5$LNKWH, na.rm = TRUE)
+)
+print(medians)
+# now that I have my medians I will plug them into the r equation
+r_vals <- c(
+    1/(0.152547 + 2 * 0.050514 * 3.761200),
+    1/(0.152547 + 2 * 0.050514 * 5.823046),
+    1/(0.152547 + 2 * 0.050514 * 7.011214),
+    1/(0.152547 + 2 * 0.050514 * 7.707962),
+    1/(0.152547 + 2 * 0.050514 * 8.668884)
+)
+print(r_vals)
 ```
 
+# 4. Comparing Returns-to-Scale Estimates from 1955 with Updated 1970 Data
+## A. 
+To start my analysis, I will construct the necesary variables to estimate Nerlove's equation by OLS. I generate the variables LNC70, LNY70, LNP170, and LNP270. Next I find that the sample mean for KWH70 is 8999.727 while that of KWH is just 2133.083, a pretty substantial difference. This indicates that on average firms are generating significantly larger ammounts of energy in 1970 than they were in 1955. Based on this information, we may expect much smaller returns to scale, potentially even decreasing returns to scale. Out previous model showed that as output scaled up the returns to scale diminished. Since we see such a jump in KWH produced between then and the 1970 data, we may expect to see that trend embodied. There is also the possibility that technological improvements and expansion of productive capacity could offset this expectation however, and we could see similar if not greater retruns to scale in 1970 than we did before. 
+```{r}
+# load new update data
+update <- read_excel('/Users/kieran/Documents/MASTERS/METRICS/code/metrics/practicum_3_files/ARE 256A FQ 2025 Update.xlsx')
+# clean data and add new generated variables
+update_clean <- update |> 
+    mutate(
+        LNC70 = log(COST70/PF70),
+        LNY70 = log(KWH70),
+        LNP170 = log(PL70/PF70),
+        LNP270 = log(PK70/PF70)
+    )
+# compute sample means ot KWH to compare
+mean(update_clean$KWH70)
+mean(clean$KWH)
+```
 
+## B. 
+I estimate the model LNC70 = β0 + βyLNY70 + β1LNP170 + β2×LNP270 + u and find a 99% confidence interval which comes out to (0.7923, 0.8584). Based on these results, I can determine that the null hypothesis that $\beta_y=1$ (indicating constant returns to scale) can be rejected because the 99% confidence interval is well below 1. The difference between out highest CI boundary is more than a couple standard errors away from 1, giving me strong confidence that given this model we can reject the null. Additionally, we can see that since $\beta_y$ is well below 1, indicating increasing returns to scale. This is backed by the r value of 1.212 which indicates that as quantity increases, we get more bang for our buck through efficiency gains. Compared to the findings in section 2, this is a bit surprising as I find a larger coefficient on $\beta_y$ which according to previous results shouldnt be the case since quantity increased so much. 
 
+```{r}
+# run model
+model4 <- lm(data = update_clean, LNC70~LNY70+LNP170+LNP270)
+summary(model4)
+# construct confidence interval
+confint(model4, "LNY70", level = 0.99)
+# calculate the r value
+1/0.82533
+```
 
+## C.
+Now I add a squared term and run a more generalized verison of the previous model to account for potential nonlinearity, a culprate observed in the 1950's data. This model outputs coefficients for $\beta_y, \beta_{yy}, \beta_1, and \beta_2$ of 0.3014, 0.0367, 0.2941, and 0.0507 respectively and an $R^2$ of 0.99. Next I run a hypothesis test on the null that returns to scale do not vary with output, or that $\beta_{yy}=0$ using a 95% condifence interval. To do this I compare the t statistic reported in the regression to the respective p value for the coefficient on I(LNY70^2) which, since the p value is VERY close to 0, allows us to reject the null and determine that there is sufficient evidence to suggest that returns to scale vary with output level. Next I test the joint null hypothesis that returns to scale are constant, that is βyy = 0 and βy = 1. I find a significantly smaller RSS than in the constricted model, a massive f statistic and a p value that is effectively 0, allowing me to reject the null and determine that the unrestricted specification is a better fit for the sample. This means that there is strong evidence that the relationship between cost and output is nonlinear. These findings are not mutually exclusive, and in fact complement each other nicely. Both the individual t-test and the joint f-test yield results suggesting that the underlying relationship involves some nonlinear element, and that perhaps the restricted specification is inadequate. 
+
+```{r}
+# run the updated model
+model5 <- lm(data = update_clean, LNC70~LNY70+I(LNY70^2)+LNP170+LNP270)
+summary(model5)
+# conduct hypothesis test
+linearHypothesis(model5, c("LNY70 = 1", "I(LNY70^2) = 0"))
+
+```
+
+## D. 
+I will now split the 1970 data into 5 subsamples, where the first 4 groups contain 20 rows and the last group contains 19. Next, I estimate by OLS the parameters of the part B. equation seperately for each group. I find $\beta_y$ coefficients for groups 1-5 of 0.675, 0.779, 1.141, 0.862, and 1.014 respectively. The corresponding returns to scale estimates are 1.481, 1.284, 0.876, 1.160, and 0.986 respectively. Relative to the 1955 data, the retruns to scale estimates are much more moderate and seem to jump around a bit more. They also do not follow as consistent of a trend as we saw in Nerlove's estimation. In groups 1, 2, and 4 I see increasing returns to scale with r-values greater than 1. For grops 3 and 5 I see decreasing (but almost constant) returns to scale. Relative to Nerlove's findings, the 1970 returns to scale estimates I generated suggest a reduction in scale economies over time due to their smaller size relative to those in the 50's. The larger plants exhibit close to constand or slightly decreasing RTS generally with some exceptions, and RTS do not simply trend downwaards in 1970 like was the case in the 50's. Instead of the U-shape described in earlier sections, these data take on more of an eratic shape with ups and downs as output increases. I think that this makes sense given what I understand about more modern mature industries, whose economies of scale may diminish but can experience expansionary bumps due to factors like technological advancement that allow them to push past physical limitations that may have been prohibiting.  
+
+```{r}
+# generate subsets of data
+ss170 <- update_clean |> 
+    filter(
+        Obs <= 20
+    )
+ss270 <- update_clean |> 
+    filter(
+        Obs >20 & Obs <=40
+    )
+ss370 <- update_clean |> 
+    filter(
+        Obs > 40 & Obs <=60
+    )
+ss470 <- update_clean |> 
+    filter(
+        Obs>60 & Obs<= 80
+    )
+ss570 <- update_clean |> 
+    filter(
+        Obs>80
+    )
+
+# run all models for individual subsets
+model6 <- lm(data = ss170, LNC70~LNY70+LNP170+LNP270)
+model7 <- lm(data = ss270, LNC70~LNY70+LNP170+LNP270)
+model8 <- lm(data = ss370, LNC70~LNY70+LNP170+LNP270)
+model9 <- lm(data = ss470, LNC70~LNY70+LNP170+LNP270)
+model10 <- lm(data = ss570, LNC70~LNY70+LNP170+LNP270)
+summary(model6)
+summary(model7)
+summary(model8)
+summary(model9)
+summary(model10)
+# calculate returns to scale estimates for each 
+# ss170
+1/0.675
+# ss270
+1/0.779
+# ss370
+1/1.141
+# ss470
+1/0.862
+# ss570
+1/1.014
+```
+
+## E. 
+The Christensen-Greene finding can be evaluated on several fronts, several of which I replicated in previous sections. By exploring for myself the returns to scale values for each subsection and comapring them to those found, by considering the context of the findings, and by relating them back to what makes sense intuitively about constraints, I was able to work through the 1070 findings and conclude in agreement with the finding that most U.S electricity was generated by firms who opperated close to the min of their average cost curves. Comparing the 1970 results to the 1955 results, I find returnes to scale estimates that are far closer t0 1 (constant) implying that firms are seeing less in the way of large cost advantaged from further expansion. This is what we would expect of firms as they grow and increase production due to real world limitations like space, time, technology, and regulation. I also generated a plot similar to that in the first section showing residuals plotted against log of output by obs. As noted in part D. the curve is not as nicely U-shaped as the one generated using Nerlove's data, with most firms clustered around the flat bit where the residual value is approx 0 and the LNY70 is between 7 and 10 (on the higher end). This is the area that is directly before firms may start seeing negative returns to scale, which seems like a perfect place to stop pushing output increases. My estimates allign with the Christensen-Greene finding, suggesting that by the 1970s, most of the economies of scale in the industry has been exploited and plants chose to opperate relatively close to the efficient scale since producing less left cash on the table while producing more wouldnt reduce average cost for most. 
+```{r}
+# compute graphic showing residuals plotted against log of
+# output like in the first section to compare shape.
+update_clean <- update_clean |> 
+    mutate(
+        resid = residuals(model5)
+    )
+
+# plot against log of output
+ggplot(data = update_clean, mapping = aes(y = resid, x = LNY70, color = Obs)) +
+    geom_point() +
+    geom_smooth(method = loess) +
+    theme_minimal() +
+    labs(title = "Residuals Plotted Against Log of Output", x = "LNY70", y = "Residuals")
+```
